@@ -85,9 +85,9 @@ print("[INFO     ] plotly version : " + plotly_version)
 print("[INFO     ] authentication : configured") if valid_username_password_pairs is not None else print("[INFO     ] authentication : not configured")
 
 
-# dataset_path = "./data/final/DIERX_test.csv"
+# dataset_path = "./data/final/DIERX_Test.csv"
 dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
-locations_path = "./data/final/DIERX_locations.csv"
+locations_path = "./data/final/DIERX_Locations.csv"
 
 # Read data from file 'filename.csv'
 dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
