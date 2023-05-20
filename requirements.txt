@@ -3,23 +3,33 @@
 # @package    dierx-nester-visuals
 #             for Dierx on render 
 # 
-# @version    v0.0.4  2023-01-08
+# @version    v0.0.5  2023-05-20
 # @author     pierre@ipheion.eu
 # @copyright  (C) 2022-2023 Pierre Veelen
 #
 # =============================================================================
 
 # GENERIC DATA WRANGLING
-pandas==1.2.5
+#pandas==1.2.5
+pandas
+
 
 # GEO DATA WRANGLING
-shapely==1.8.2
+#shapely==1.8.2
+shapely
+
 
 # DATA VISUALISATION
-plotly==5.7.0
-dash==2.3.1
-dash-bootstrap-components==1.1.0
-dash-daq==0.5.0
+#plotly==5.7.0
+#dash==2.3.1
+#dash-bootstrap-components==1.1.0
+#dash-daq==0.5.0
+
+plotly==5.14.1
+dash==2.9.3
+dash-bootstrap-components
+dash-daq
+
 
 # basic authentication
 #dash-auth==1.4.1
@@ -30,8 +40,10 @@ ua_parser==0.16.1
 chart_studio==1.1.0
 
 # WEB DATA
-urllib3==1.26.9
+#urllib3==1.26.9
+urllib3
 certifi
 
 # RENDER SPECIFIC 
-gunicorn==20.1.0
+#gunicorn==20.1.0
+gunicorn

@@ -70,6 +70,9 @@ try:
 except Exception as e:
     valid_username_password_pairs = None
     print("[EXCEPTION]", e)
+print(valid_username_password_pairs)
+
+
 
 # SYSTEM AND APP INFO
 # =============================================
