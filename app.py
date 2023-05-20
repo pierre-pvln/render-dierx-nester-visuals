@@ -85,6 +85,9 @@ print("[INFO     ] dash version   : " + dash_version)
 print("[INFO     ] plotly version : " + plotly_version)
 print("[INFO     ] authentication : configured") if valid_username_password_pairs is not None else print("[INFO     ] authentication : not configured")
 
+# =============================================
+# GETTING THE DATA
+# =============================================
 
 # dataset_path = "./data/final/DIERX_Test.csv"
 dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
@@ -137,16 +140,16 @@ merged.sort_index(inplace=True)
 # print(merged.tail())
 # print(merged.dtypes)
 
-fig1 = px.line(merged, x="date-time_str", y="payload_1",
-               color='Adres', title="Gemeten opbrengst",
-               labels={'date-time_str': 'datum / tijdstip', 'payload_1': 'gemeten kWh'})
-#fig.show()
+current_fig = px.line(merged, x="date-time_str", y="payload_1",
+                      color='Adres', title="Gemeten opbrengst",
+                      labels={'date-time_str': 'datum / tijdstip', 'payload_1': 'gemeten kWh'})
+#current_fig.show()
 
-fig2 = px.line(merged, x="date-time_str", y="payload_2",
-               color='Adres', title="Cumulatieve opbrengst",
-               labels={'date-time_str': 'datum / tijdstip', 'payload_2': 'gemeten kWh'})
+cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
+                         color='Adres', title="Cumulatieve opbrengst",
+                         labels={'date-time_str': 'datum / tijdstip', 'payload_2': 'gemeten kWh'})
 
-#fig.show()
+#cumulative_fig.show()
 
 # ==================================================
 # APP DEFINITIONS
@@ -188,13 +191,15 @@ app.config["update_title"] = ".. Renewing .."
 if the_hostname not in ["LEGION-2020"]:
     server = app.server  # required for Heroku
 
+# ==================================================
+# APP LAYOUT
+# ==================================================
 app.layout = html.Div(
     [
-     dcc.Graph(figure=fig1),
-     dcc.Graph(figure=fig2)
+     dcc.Graph(figure=current_fig),
+     dcc.Graph(figure=cumulative_fig)
     ]
 )
-
 
 # ==================================================
 # START THE APP
