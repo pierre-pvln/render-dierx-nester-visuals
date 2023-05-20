@@ -61,9 +61,9 @@ else:  # assumes production => minimum output
 
 
 print("=ENVIRONMENT VARS ==========================================")
-print("\n".join(["%s=%s" % (k, v) for k, v in os.environ.items()])) 
+#print("\n".join(["%s=%s" % (k, v) for k, v in os.environ.items()])) 
+print(os.getenv("APP_AUTHENTICATION", default=None))
 print("=ENVIRONMENT VARS ==========================================")
-
 
 try:
     valid_username_password_pairs = json.loads(os.getenv("APP_AUTHENTICATION", default=None))
