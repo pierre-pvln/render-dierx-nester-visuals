@@ -17,6 +17,11 @@ class BasicAuth(Auth):
         username_password = base64.b64decode(header.split('Basic ')[1])
         username_password_utf8 = username_password.decode('utf-8')
         username, password = username_password_utf8.split(':', 1)
+        
+        #####
+        print(username,password)
+        #####
+        
         return self._users.get(username) == password
 
     # ToDo add better response text (HTML formatted)
