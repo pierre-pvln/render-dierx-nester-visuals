@@ -38,7 +38,7 @@ chart_studio==1.1.0
 
 # WEB DATA
 #urllib3==1.26.9
-urllib3=1.26.15
+urllib3==1.26.15
 certifi
 
 # RENDER SPECIFIC 
