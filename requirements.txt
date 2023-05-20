@@ -1,0 +1,37 @@
+# =============================================================================
+#
+# @package    dierx-nester-visuals
+#             for Dierx on render 
+# 
+# @version    v0.0.4  2023-01-08
+# @author     pierre@ipheion.eu
+# @copyright  (C) 2022-2023 Pierre Veelen
+#
+# =============================================================================
+
+# GENERIC DATA WRANGLING
+pandas==1.2.5
+
+# GEO DATA WRANGLING
+shapely==1.8.2
+
+# DATA VISUALISATION
+plotly==5.7.0
+dash==2.3.1
+dash-bootstrap-components==1.1.0
+dash-daq==0.5.0
+
+# basic authentication
+#dash-auth==1.4.1
+# is work in progress. Using local dash_auth_personal
+# import these specific for authentication
+requests
+ua_parser
+chart_studio
+
+# WEB DATA
+urllib3==1.26.9
+certifi
+
+# RENDER SPECIFIC 
+gunicorn==20.1.0
