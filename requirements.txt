@@ -25,9 +25,9 @@ dash-daq==0.5.0
 #dash-auth==1.4.1
 # is work in progress. Using local dash_auth_personal
 # import these specific for authentication
-requests
-ua_parser
-chart_studio
+requests==2.28.1
+ua_parser==0.16.1
+chart_studio==1.1.0
 
 # WEB DATA
 urllib3==1.26.9

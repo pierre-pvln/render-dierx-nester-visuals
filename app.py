@@ -59,6 +59,12 @@ else:  # assumes production => minimum output
     # 3 = Show additional info
     glb_hide_debug_text = True
 
+
+print("=ENVIRONMENT VARS ==========================================")
+print("\n".join(["%s=%s" % (k, v) for k, v in os.environ.items()])) 
+print("=ENVIRONMENT VARS ==========================================")
+
+
 try:
     valid_username_password_pairs = json.loads(os.getenv("APP_AUTHENTICATION", default=None))
 except Exception as e:
