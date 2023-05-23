@@ -106,6 +106,9 @@ dataset['payload'] = dataset['payload'].str.replace(r'<br>$', '', regex=True)
 # Split string column into two new columns
 dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
 
+payload_type_list = ['psh']  # only messeaured values are used
+dataset = dataset[dataset['payload_type'].isin(payload_type_list)]
+
 dataset[['payload_1', 'payload_2']] = dataset[['payload_1', 'payload_2']].astype(float)
 
 # Preview the first 5 lines of the loaded data
