@@ -147,12 +147,18 @@ merged.sort_index(inplace=True)
 
 current_fig = px.line(merged, x="date-time_str", y="payload_1",
                       color='UniekId', title="Gemeten opbrengst",
-                      labels={'date-time_str': 'datum / tijdstip', 'payload_1': 'gemeten kWh'})
+                      labels={'date-time_str': 'datum / tijdstip',
+                              'payload_1': 'gemeten kWh',
+                              'UniekId','DeviceId|Lokatie'}
+                      )
 #current_fig.show()
 
 cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
                          color='UniekId', title="Cumulatieve opbrengst",
-                         labels={'date-time_str': 'datum / tijdstip', 'payload_2': 'gemeten kWh'})
+                         labels={'date-time_str': 'datum / tijdstip',
+                                 'payload_2': 'gemeten kWh',
+                                 'UniekId','DeviceId|Lokatie'}
+                         )
 
 #cumulative_fig.show()
 
