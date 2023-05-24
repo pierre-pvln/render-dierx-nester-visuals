@@ -106,10 +106,17 @@ dataset['payload'] = dataset['payload'].str.replace(r'<br>$', '', regex=True)
 # Split string column into two new columns
 dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
 
-payload_type_list = ['psh']  # only messeaured values are used
-dataset = dataset[dataset['payload_type'].isin(payload_type_list)]
+correct_payload_type_list = ['psh']  # only messeaured values are used
+dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)]
+dataset_error = dataset[~dataset['payload_type'].isin(correcy_payload_type_list)]
 
-dataset[['payload_1', 'payload_2']] = dataset[['payload_1', 'payload_2']].astype(float)
+dataset_error['payload_1'] = pd.NA
+dataset_error['payload_2'] = pd.NA
+print(dataset_error.head())
+print(dataset_error.tail())
+
+filtered_dataset = dataset_correct + dataset_error
+filtered_dataset[['payload_1', 'payload_2']] = filtered_dataset[['payload_1', 'payload_2']].astype(float)
 
 # Preview the first 5 lines of the loaded data
 # print(dataset.head())
@@ -126,7 +133,7 @@ locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " +
 # print(locations.dtypes)
 # print(locations['serienr'].unique())
 
-merged = pd.merge(dataset, locations, left_on='IMEI_str', right_on='serienr')
+merged = pd.merge(filtered_dataset, locations, left_on='IMEI_str', right_on='serienr')
 # print(merged.head())
 
 merged['UniekId'] =  merged['IMEI_str'] + "|" + merged['Adres'] 
@@ -144,6 +151,7 @@ merged.sort_index(inplace=True)
 # print(merged.head())
 # print(merged.tail())
 # print(merged.dtypes)
+
 
 current_fig = px.line(merged, x="date-time_str", y="payload_1",
                       color='UniekId', title="Gemeten opbrengst",
