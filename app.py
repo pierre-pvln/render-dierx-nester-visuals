@@ -108,7 +108,7 @@ dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(
 
 correct_payload_type_list = ['psh']  # only messeaured values are used
 dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)]
-dataset_error = dataset[~dataset['payload_type'].isin(correcy_payload_type_list)]
+dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)]
 
 dataset_error['payload_1'] = pd.NA
 dataset_error['payload_2'] = pd.NA
