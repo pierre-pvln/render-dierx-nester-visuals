@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v01"
+app_version = "v02"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -129,6 +129,8 @@ locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " +
 merged = pd.merge(dataset, locations, left_on='IMEI_str', right_on='serienr')
 # print(merged.head())
 
+merged['UniekId'] =  merged['IMEI_str'] + "|" + merged['Adres'] 
+
 # https://strftime.org/
 merged['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 
@@ -144,12 +146,12 @@ merged.sort_index(inplace=True)
 # print(merged.dtypes)
 
 current_fig = px.line(merged, x="date-time_str", y="payload_1",
-                      color='Adres', title="Gemeten opbrengst",
+                      color='UniekId', title="Gemeten opbrengst",
                       labels={'date-time_str': 'datum / tijdstip', 'payload_1': 'gemeten kWh'})
 #current_fig.show()
 
 cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
-                         color='Adres', title="Cumulatieve opbrengst",
+                         color='UniekId', title="Cumulatieve opbrengst",
                          labels={'date-time_str': 'datum / tijdstip', 'payload_2': 'gemeten kWh'})
 
 #cumulative_fig.show()
