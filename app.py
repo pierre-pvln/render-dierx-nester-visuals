@@ -103,20 +103,28 @@ dataset.columns =['IMEI_str', 'date-time_str', 'payload']
 # only valid for http download
 dataset['payload'] = dataset['payload'].str.replace(r'<br>$', '', regex=True)
 
-# Split string column into two new columns
+# Split payload column into two new columns
 dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
 
+# https://strftime.org/
+dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
+
 correct_payload_type_list = ['psh']  # only messeaured values are used
-dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)]
-dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)]
 
-dataset_error['payload_1'] = pd.NA
-dataset_error['payload_2'] = pd.NA
-print(dataset_error.head())
-print(dataset_error.tail())
+dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
+dataset_error['datum_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.date
+dataset_error['tijdstip_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.time
+dataset_error['uniek_id'] = dataset_error['IMEI_str'] + "|" + dataset_error['payload_1']
+# set dt column as index
+dataset_error.set_index('date-time_dt', inplace=True)
+# sort on index
+dataset_error.sort_index(inplace=True)
 
-filtered_dataset = dataset_correct + dataset_error
-filtered_dataset[['payload_1', 'payload_2']] = filtered_dataset[['payload_1', 'payload_2']].astype(float)
+
+dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)].copy()
+
+filtered_dataset = dataset_correct
+dataset_correct[['payload_1', 'payload_2']] = dataset_correct[['payload_1', 'payload_2']].astype(float)
 
 # Preview the first 5 lines of the loaded data
 # print(dataset.head())
@@ -133,10 +141,10 @@ locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " +
 # print(locations.dtypes)
 # print(locations['serienr'].unique())
 
-merged = pd.merge(filtered_dataset, locations, left_on='IMEI_str', right_on='serienr')
+merged = pd.merge(dataset_correct, locations, left_on='IMEI_str', right_on='serienr')
 # print(merged.head())
 
-merged['UniekId'] =  merged['IMEI_str'] + "|" + merged['Adres'] 
+merged['uniek_id'] = merged['IMEI_str'] + "|" + merged['Adres']
 
 # https://strftime.org/
 merged['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
@@ -154,19 +162,28 @@ merged.sort_index(inplace=True)
 
 
 current_fig = px.line(merged, x="date-time_str", y="payload_1",
-                      color='UniekId', title="Gemeten opbrengst",
+                      color='uniek_id', title="Gemeten opbrengst",
                       labels={'date-time_str': 'datum / tijdstip',
                               'payload_1': 'gemeten kWh',
-                              'UniekId':'DeviceId|Lokatie'}
+                              'UniekId': 'DeviceId|Lokatie'}
                       )
 #current_fig.show()
 
 cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
-                         color='UniekId', title="Cumulatieve opbrengst",
+                         color='uniek_id', title="Cumulatieve opbrengst",
                          labels={'date-time_str': 'datum / tijdstip',
                                  'payload_2': 'gemeten kWh',
-                                 'UniekId':'DeviceId|Lokatie'}
+                                 'UniekId': 'DeviceId|Lokatie'}
                          )
+
+errordots_fig = px.scatter(dataset_error, x="datum_dt", y='tijdstip_dt',
+                           color='uniek_id', title="Error Messages",
+                           labels={'payload_1': 'Foutcode',
+                                   'UniekId': 'DeviceId|Foutcode'}
+                           )
+
+# Stel het bereik van de y-as in op 00:00 - 25:59
+errordots_fig.update_yaxes(range=['00:00:00', '25:59:59'])
 
 #cumulative_fig.show()
 
@@ -216,7 +233,8 @@ if the_hostname not in ["LEGION-2020"]:
 app.layout = html.Div(
     [
      dcc.Graph(figure=current_fig),
-     dcc.Graph(figure=cumulative_fig)
+     dcc.Graph(figure=cumulative_fig),
+     # dcc.Graph(figure=errordots_fig)
     ]
 )
 
