@@ -26,6 +26,12 @@ import plotly.express as px
 # authentication
 import dash_auth_personal
 
+# settings for strings
+from config import strings
+
+# app layout elements
+from html_layouts import debug, footer, header, rows
+
 # ==================================================
 # DEFINE GENERICALLY USED VARS
 # ==================================================
@@ -65,6 +71,9 @@ try:
 except Exception as e:
     valid_username_password_pairs = None
     print("[EXCEPTION]", e)
+
+o_glb_header_subtitle = strings.HEADER_SUBTITLE  # the value of the location name in the selectionbox
+
 
 # SYSTEM AND APP INFO
 # =============================================
@@ -114,12 +123,13 @@ correct_payload_type_list = ['psh']  # only messeaured values are used
 dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
 dataset_error['datum_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.date
 dataset_error['tijdstip_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.time
+dataset_error['tijdstip_str'] = dataset_error['tijdstip_dt'].astype(str)
+dataset_error['uur_str'] = dataset_error['tijdstip_str'].str[:2]
 dataset_error['uniek_id'] = dataset_error['IMEI_str'] + "|" + dataset_error['payload_1']
 # set dt column as index
 dataset_error.set_index('date-time_dt', inplace=True)
 # sort on index
 dataset_error.sort_index(inplace=True)
-
 
 dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)].copy()
 
@@ -155,37 +165,33 @@ merged.set_index('date-time_dt', inplace=True)
 # sort on index
 merged.sort_index(inplace=True)
 
-# Preview the first 5 lines of the loaded data
-# print(merged.head())
-# print(merged.tail())
-# print(merged.dtypes)
-
+# sort the municipality names also
+all_location_names = sorted(merged["uniek_id"].unique().tolist())
+location_names = [{"label": i, "value": i} for i in all_location_names]
 
 current_fig = px.line(merged, x="date-time_str", y="payload_1",
                       color='uniek_id', title="Gemeten opbrengst",
                       labels={'date-time_str': 'datum / tijdstip',
                               'payload_1': 'gemeten kWh',
-                              'UniekId': 'DeviceId|Lokatie'}
+                              'uniek_id': 'DeviceId|Lokatie'}
                       )
-#current_fig.show()
 
 cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
                          color='uniek_id', title="Cumulatieve opbrengst",
                          labels={'date-time_str': 'datum / tijdstip',
                                  'payload_2': 'gemeten kWh',
-                                 'UniekId': 'DeviceId|Lokatie'}
+                                 'uniek_id': 'DeviceId|Lokatie'}
                          )
 
-errordots_fig = px.scatter(dataset_error, x="datum_dt", y='tijdstip_dt',
+errordots_fig = px.scatter(dataset_error, x="datum_dt", y='uur_str',
                            color='uniek_id', title="Error Messages",
-                           labels={'payload_1': 'Foutcode',
-                                   'UniekId': 'DeviceId|Foutcode'}
+                           labels={'datum_dt': 'datum',
+                                   'uur_str': 'tijdstip',
+                                   'uniek_id': 'DeviceId|Foutcode'},
+                           category_orders={
+                               "uur_str": ['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
+                                           '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']},
                            )
-
-# Stel het bereik van de y-as in op 00:00 - 25:59
-errordots_fig.update_yaxes(range=['00:00:00', '25:59:59'])
-
-#cumulative_fig.show()
 
 # ==================================================
 # APP DEFINITIONS
@@ -214,7 +220,7 @@ if valid_username_password_pairs is not None:
         valid_username_password_pairs
     )
 
-app.title = "Cordiplan Demo Dashboard"
+app.title = strings.APP_TITLE
 app.config["update_title"] = ".. Renewing .."
 # ToDo html page title to location that is viewed
 # https://dash.plotly.com/external-resources -> Update the Document Title Dynamically Based on the URL or Tab
@@ -232,11 +238,69 @@ if the_hostname not in ["LEGION-2020"]:
 # ==================================================
 app.layout = html.Div(
     [
-     dcc.Graph(figure=current_fig),
-     dcc.Graph(figure=cumulative_fig),
-     # dcc.Graph(figure=errordots_fig)
-    ]
+        # TOP ROW / HEADER ROW
+        # ====================
+        # https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
+        header.build_header(
+            title_str=strings.HEADER_TITLE,
+            subtitle_str=o_glb_header_subtitle,
+            version_str=app_version,
+        ),
+        debug.build_header(
+            dbg_str="-* debug text here *-",  # start with empty debug text
+            hide_it=glb_hide_debug_text,
+        ),
+        # CENTER ROW
+        # ==========
+
+        html.Br([], ),
+        rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
+        html.Br([], ),
+
+        dbc.Row(
+            [
+                # LEFT COLUMN
+                # ============
+                dbc.Col(
+                    [
+                    ],
+                    width=4,
+                    # style={"height": "400px"},
+                ),
+                # RIGHT COLUMN
+                # ============
+                dbc.Col(
+                    [
+                        # Adding Loading animation before map is shown
+                        dcc.Loading(
+                            id="loading-map",
+                            type="default",
+                            children=[
+                                dcc.Graph(figure=current_fig),
+                                dcc.Graph(figure=cumulative_fig),
+                                dcc.Graph(figure=errordots_fig)
+                                ]
+                                ),
+                        html.Br(),
+                    ],
+                    width=8,
+                    # style={"height": "400px"},
+                ),
+            ],
+            style={"paddingTop": "10px"},
+        ),
+        # BELOW THE MAP AND SELECTIONS
+        # ============================
+        html.Br(),
+        footer.build_footer(),
+    ],
+    id="data-screen",
+    # style={
+    #     "border-style": "solid",
+    #     "height": "98vh"
+    # }
 )
+
 
 # ==================================================
 # START THE APP
