@@ -40,6 +40,9 @@ def MAP_ROW(id_name, settings, a_figure):
 
 
 def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
+    print("LOCATION_SELECTION_ROW")
+    print(alldropdownoptions)
+
     return dbc.Row(  # location
         [
             dbc.Col(

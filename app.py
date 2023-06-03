@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v02"
+app_version = "v03"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -19,6 +19,7 @@ import plotly
 from dash import Dash, dcc, html
 from dash.dash_table.Format import Align, Format, Group
 from dash.dependencies import Input, Output, State
+import plotly.graph_objects as go
 
 import pandas as pd 
 import plotly.express as px
@@ -120,16 +121,16 @@ dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m
 
 correct_payload_type_list = ['psh']  # only messeaured values are used
 
-dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
-dataset_error['datum_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.date
-dataset_error['tijdstip_dt'] = pd.to_datetime(dataset_error['date-time_dt']).dt.time
-dataset_error['tijdstip_str'] = dataset_error['tijdstip_dt'].astype(str)
-dataset_error['uur_str'] = dataset_error['tijdstip_str'].str[:2]
-dataset_error['uniek_id'] = dataset_error['IMEI_str'] + "|" + dataset_error['payload_1']
+glb_dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
+glb_dataset_error['datum_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.date
+glb_dataset_error['tijdstip_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.time
+glb_dataset_error['tijdstip_str'] = glb_dataset_error['tijdstip_dt'].astype(str)
+glb_dataset_error['uur_str'] = glb_dataset_error['tijdstip_str'].str[:2]
+glb_dataset_error['uniek_id'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['payload_1']
 # set dt column as index
-dataset_error.set_index('date-time_dt', inplace=True)
+glb_dataset_error.set_index('date-time_dt', inplace=True)
 # sort on index
-dataset_error.sort_index(inplace=True)
+glb_dataset_error.sort_index(inplace=True)
 
 dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)].copy()
 
@@ -151,47 +152,145 @@ locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " +
 # print(locations.dtypes)
 # print(locations['serienr'].unique())
 
-merged = pd.merge(dataset_correct, locations, left_on='IMEI_str', right_on='serienr')
+glb_merged = pd.merge(dataset_correct, locations, left_on='IMEI_str', right_on='serienr')
 # print(merged.head())
 
-merged['uniek_id'] = merged['IMEI_str'] + "|" + merged['Adres']
+glb_merged['uniek_id'] = glb_merged['IMEI_str'] + "|" + glb_merged['Adres']
 
 # https://strftime.org/
-merged['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
+glb_merged['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 
 # set dt column as index
-merged.set_index('date-time_dt', inplace=True)
+glb_merged.set_index('date-time_dt', inplace=True)
 
 # sort on index
-merged.sort_index(inplace=True)
+glb_merged.sort_index(inplace=True)
 
-# sort the municipality names also
-all_location_names = sorted(merged["uniek_id"].unique().tolist())
-location_names = [{"label": i, "value": i} for i in all_location_names]
+# get the list with dicts for the location dropdown selection
+# https://dash.plotly.com/dash-core-components/dropdown#options-and-value
+all_location_names = sorted(glb_merged["uniek_id"].unique().tolist())
+location_names = [
+    {"label": i.split("|")[1],  # Get the last part of the 'uniek_id' which is the 'Adres' this is shown in dropdownbox
+     "value": i.split("|")[0]}  # Get the first part of the 'uniek_id' which is the 'IMEI' this is the value returned
+    for i in all_location_names
+]
+# use the IMEI part as the all_location_names
+all_location_names = [i.split("|")[0] for i in all_location_names]
 
-current_fig = px.line(merged, x="date-time_str", y="payload_1",
-                      color='uniek_id', title="Gemeten opbrengst",
-                      labels={'date-time_str': 'datum / tijdstip',
-                              'payload_1': 'gemeten kWh',
-                              'uniek_id': 'DeviceId|Lokatie'}
-                      )
+print(location_names)
+print(all_location_names)
 
-cumulative_fig = px.line(merged, x="date-time_str", y="payload_2",
-                         color='uniek_id', title="Cumulatieve opbrengst",
-                         labels={'date-time_str': 'datum / tijdstip',
-                                 'payload_2': 'gemeten kWh',
-                                 'uniek_id': 'DeviceId|Lokatie'}
-                         )
 
-errordots_fig = px.scatter(dataset_error, x="datum_dt", y='uur_str',
-                           color='uniek_id', title="Error Messages",
-                           labels={'datum_dt': 'datum',
-                                   'uur_str': 'tijdstip',
-                                   'uniek_id': 'DeviceId|Foutcode'},
-                           category_orders={
-                               "uur_str": ['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
-                                           '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']},
-                           )
+# ==================================================
+# LAYOUT DEFINITIONS
+# ==================================================
+# ToDo move to module section
+def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
+    return dbc.Row(
+                # row with graph
+                [
+                    # first create a col. this ensures full use of row length
+                    dbc.Col([
+                        # Show a "spinner" until graph has loaded.
+                        # To create this effect, add the graph as child of the loading
+                        dcc.Loading(
+                            # https://dash.plotly.com/dash-core-components/loading
+                            id="loading_"+id_name,
+                            type="default",
+                            children=[
+                                dcc.Graph(
+                                    # https://dash.plotly.com/dash-core-components/graph
+                                    id=id_name,
+                                    figure=figure_dict,  # initialize with empty figure
+                                    style={
+                                        "height": "400px",
+                                        "width": "100%"
+                                    },
+                                    config=config_name,
+                                )
+                            ],
+                        ),
+                    ],
+                    ),
+                ],
+            )
+
+# ToDo move to module section
+def settings_graph_modebar(file_name):
+    return dict(
+        # https://plotly.com/javascript/configuration-options/#never-display-the-modebar
+        displayModeBar="hover",
+        # True : always show modebar
+        # False: never show mode bar
+        # "hover": only show modebar when hovering over graph
+
+        # https://plotly.com/javascript/configuration-options/#remove-modebar-buttons
+        modeBarButtonsToRemove=['lasso2d', 'select2d', 'pan2d',
+                                'toggleSpikelines', 'toggleHover',
+                                'hoverClosestCartesian', 'hoverCompareCartesian',
+                                'hoverClosestGl2d'],
+
+        # https://plotly.com/javascript/configuration-options/#customize-download-plot-options
+        toImageButtonOptions=dict(
+            format='png',  # one of 'png', 'svg', 'jpeg', 'webp'
+            filename=file_name,
+            height=500,
+            width=700,
+            scale=1  # Multiply title / legend / axis / canvas sizes by this factor
+        ),
+
+        # https://plotly.com/javascript/configuration-options/#hide-the-plotly-logo-on-the-modebar
+        displaylogo=True  # Either True or False
+    )
+
+
+# ========================================= #
+#                                           #
+# Define the web/html layout for the app    #
+#                                           #
+# - more details are defined in layouts.py  #
+#                                           #
+# ========================================= #
+def OVERALL_APP_LAYOUT():
+    empty_fig = go.Figure()
+
+    return html.Div(
+    [
+        # TOP ROW / HEADER ROW
+        # ====================
+        # https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
+        header.build_header(
+            title_str=strings.HEADER_TITLE,
+            subtitle_str=o_glb_header_subtitle,
+            version_str=app_version,
+        ),
+        debug.build_header(
+            dbg_str="-* debug text here *-",  # start with empty debug text
+            hide_it=glb_hide_debug_text,
+        ),
+        # CENTER ROW
+        # ==========
+
+        html.Br([], ),
+        rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
+        html.Br([], ),
+
+        GRAPHS_ROW("current_fig", settings_graph_modebar('current_graph'), empty_fig),
+        GRAPHS_ROW("cumulative_fig", settings_graph_modebar('cumulative_graph'), empty_fig),
+        GRAPHS_ROW("errordots_fig", settings_graph_modebar('errordots_graph'), empty_fig,),
+
+        # BELOW THE ROWS
+        # ============================
+        html.Br(),
+        footer.build_footer(),
+    ],
+    id="data-screen",
+    # style={
+    #     "border-style": "solid",
+    #     "height": "98vh"
+    # }
+)
+
 
 # ==================================================
 # APP DEFINITIONS
@@ -236,70 +335,112 @@ if the_hostname not in ["LEGION-2020"]:
 # ==================================================
 # APP LAYOUT
 # ==================================================
-app.layout = html.Div(
-    [
-        # TOP ROW / HEADER ROW
-        # ====================
-        # https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
-        header.build_header(
-            title_str=strings.HEADER_TITLE,
-            subtitle_str=o_glb_header_subtitle,
-            version_str=app_version,
-        ),
-        debug.build_header(
-            dbg_str="-* debug text here *-",  # start with empty debug text
-            hide_it=glb_hide_debug_text,
-        ),
-        # CENTER ROW
-        # ==========
+app.layout = OVERALL_APP_LAYOUT()
 
-        html.Br([], ),
-        rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
-        html.Br([], ),
 
-        dbc.Row(
-            [
-                # LEFT COLUMN
-                # ============
-                dbc.Col(
-                    [
-                    ],
-                    width=4,
-                    # style={"height": "400px"},
-                ),
-                # RIGHT COLUMN
-                # ============
-                dbc.Col(
-                    [
-                        # Adding Loading animation before map is shown
-                        dcc.Loading(
-                            id="loading-map",
-                            type="default",
-                            children=[
-                                dcc.Graph(figure=current_fig),
-                                dcc.Graph(figure=cumulative_fig),
-                                dcc.Graph(figure=errordots_fig)
-                                ]
-                                ),
-                        html.Br(),
-                    ],
-                    width=8,
-                    # style={"height": "400px"},
-                ),
-            ],
-            style={"paddingTop": "10px"},
-        ),
-        # BELOW THE MAP AND SELECTIONS
-        # ============================
-        html.Br(),
-        footer.build_footer(),
-    ],
-    id="data-screen",
-    # style={
-    #     "border-style": "solid",
-    #     "height": "98vh"
-    # }
+####################################################
+# UPDATE GRAPHS
+####################################################
+# UPDATE current_fig GRAPH
+# ==================================================
+@app.callback(
+    # Where the results of the function end up
+    # =======================================
+    Output('current_fig', 'figure'),  # updated figure based on input changes
+
+    # Changes in (one of) these fires this callback
+    # =============================================
+    Input('location-selection', 'value'),  # use value from switch
+
+    # Values passed without firing callback
+    # =============================================
+    # State('','')
 )
+def current_fig(data_to_show_list):
+    global glb_merged
+    print('current_fig')
+    print(data_to_show_list)
+    print(glb_merged.columns)
+
+    output_fig = px.line(glb_merged[glb_merged["IMEI_str"].isin(data_to_show_list)],
+                         x="date-time_str",
+                         y="payload_1",
+                         color='uniek_id',
+                         title="Gemeten opbrengst",
+                         labels={'date-time_str': 'datum / tijdstip',
+                                 'payload_1': 'gemeten kWh',
+                                 'uniek_id': 'DeviceId|Lokatie'}
+                         )
+
+    return output_fig
+
+
+# UPDATE cumulative_fig GRAPH
+# ==================================================
+@app.callback(
+    # Where the results of the function end up
+    # =======================================
+    Output('cumulative_fig', 'figure'),  # updated figure based on input changes
+
+    # Changes in (one of) these fires this callback
+    # =============================================
+    Input('location-selection', 'value'),  # use value from switch
+
+    # Values passed without firing callback
+    # =============================================
+    # State('','')
+)
+def cumulative_fig(data_to_show_list):
+    global glb_merged
+    print('cumulative_fig')
+    print(data_to_show_list)
+    print(glb_merged.columns)
+
+    output_fig = px.line(glb_merged[glb_merged["IMEI_str"].isin(data_to_show_list)],
+                         x="date-time_str",
+                         y="payload_2",
+                         color='uniek_id',
+                         title="Cumulatieve opbrengst",
+                         labels={'date-time_str': 'datum / tijdstip',
+                                 'payload_2': 'gemeten kWh',
+                                 'uniek_id': 'DeviceId|Lokatie'}
+                         )
+
+    return output_fig
+
+# UPDATE errordots_fig GRAPH
+# ==================================================
+@app.callback(
+    # Where the results of the function end up
+    # =======================================
+    Output('errordots_fig', 'figure'),  # updated figure based on input changes
+
+    # Changes in (one of) these fires this callback
+    # =============================================
+    Input('location-selection', 'value'),  # use value from switch
+    # Values passed without firing callback
+    # =============================================
+    # State('','')
+)
+def error_dots_fig(data_to_show_list):
+    print('error_dots_fig')
+    print(data_to_show_list)
+    print(glb_dataset_error)
+
+    output_fig = px.scatter(glb_dataset_error[glb_dataset_error["IMEI_str"].isin(data_to_show_list)],
+                            x="datum_dt",
+                            y='uur_str',
+                            color='uniek_id',
+                            title="Error Messages",
+                            labels={'datum_dt': 'datum',
+                                    'uur_str': 'tijdstip',
+                                    'uniek_id': 'DeviceId|Foutcode'},
+                            category_orders={
+                                   "uur_str": ['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
+                                               '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']
+                                },
+                            )
+    return output_fig
 
 
 # ==================================================

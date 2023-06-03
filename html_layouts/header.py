@@ -51,7 +51,8 @@ def header_row_center(header_title="", header_subtitle="", current_version=""):
                     html.A(
                         html.Img(
                             [],
-                            src="./assets/img/amultis/amultis-logos-1401x1233.png",
+                            # src="./assets/img/amultis/amultis-logos-1401x1233.png",
+                            src="./assets/img/cordiplan/cordiplan.png",
                             height=60,
                             style={  # "textAlign": "center"
                                 "display": "block",
@@ -60,7 +61,8 @@ def header_row_center(header_title="", header_subtitle="", current_version=""):
                                 # "width": "50%"
                             },
                         ),
-                        href="https://amultis.eu/de-aanpak-van/data-analytics-data-visualisatie/",
+                        # href="https://amultis.eu/de-aanpak-van/data-analytics-data-visualisatie/",
+                        href="https://cordiplan.eu",
                         target="new",
                     ),
                 ]
