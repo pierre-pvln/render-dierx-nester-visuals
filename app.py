@@ -102,27 +102,28 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 # GETTING THE DATA
 # =============================================
 
-dataset_path = "./data/final/DIERX_Test2.csv"
-#dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
+# dataset_path = "./data/final/DIERX_Test2.csv"
+dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
 locations_path = "./data/final/DIERX_Locations.csv"
 
 if "http" not in dataset_path:
     # Read data from file 'filename.csv'
     dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
 else:
-    # Creating a PoolManager instance for sending requests.
-    https = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
-    # Sending a GET request and getting back response as HTTPResponse object.
-
-    dataset_path_URL = "https://partnersupport.neacon.eu/Dierx/print_values.php"
-    payload = {'auth': 'cordiplan'}
-
-    response = https.request(
-        "GET", dataset_path, fields=payload, retries=urllib3.Retry(total=40, status=40, redirect=40)
-    )
-
-    # Print the returned data.
-    print(response.data)
+    # # Creating a PoolManager instance for sending requests.
+    # https = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
+    # # Sending a GET request and getting back response as HTTPResponse object.
+    #
+    # dataset_path_URL = "https://partnersupport.neacon.eu/Dierx/print_values.php"
+    # payload = {'auth': 'cordiplan'}
+    #
+    # response = https.request(
+    #     "GET", dataset_path, fields=payload, retries=urllib3.Retry(total=40, status=40, redirect=40)
+    # )
+    #
+    # # Print the returned data.
+    # print(response.data)
+    dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
 
 # name columns
 dataset.columns =['IMEI_str', 'date-time_str', 'payload']
