@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v03"
+app_version = "v04"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -19,10 +19,13 @@ import plotly
 from dash import Dash, dcc, html
 from dash.dash_table.Format import Align, Format, Group
 from dash.dependencies import Input, Output, State
+import plotly.express as px
 import plotly.graph_objects as go
 
 import pandas as pd 
-import plotly.express as px
+
+import urllib3
+import certifi
 
 # authentication
 import dash_auth_personal
@@ -99,12 +102,27 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 # GETTING THE DATA
 # =============================================
 
-# dataset_path = "./data/final/DIERX_Test.csv"
-dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
+dataset_path = "./data/final/DIERX_Test2.csv"
+#dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
 locations_path = "./data/final/DIERX_Locations.csv"
 
-# Read data from file 'filename.csv'
-dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
+if "http" not in dataset_path:
+    # Read data from file 'filename.csv'
+    dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
+else:
+    # Creating a PoolManager instance for sending requests.
+    https = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
+    # Sending a GET request and getting back response as HTTPResponse object.
+
+    dataset_path_URL = "https://partnersupport.neacon.eu/Dierx/print_values.php"
+    payload = {'auth': 'cordiplan'}
+
+    response = https.request(
+        "GET", dataset_path, fields=payload, retries=urllib3.Retry(total=40, status=40, redirect=40)
+    )
+
+    # Print the returned data.
+    print(response.data)
 
 # name columns
 dataset.columns =['IMEI_str', 'date-time_str', 'payload']
@@ -118,11 +136,14 @@ dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(
 
 # https://strftime.org/
 dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
+dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
+dataset['datum_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.date
+dataset['datum_str'] = dataset['datum_dt'].astype(str)
 
 correct_payload_type_list = ['psh']  # only messeaured values are used
 
 glb_dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
-glb_dataset_error['datum_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.date
+#glb_dataset_error['datum_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.date
 glb_dataset_error['tijdstip_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.time
 glb_dataset_error['tijdstip_str'] = glb_dataset_error['tijdstip_dt'].astype(str)
 glb_dataset_error['uur_str'] = glb_dataset_error['tijdstip_str'].str[:2]
@@ -166,6 +187,11 @@ glb_merged.set_index('date-time_dt', inplace=True)
 # sort on index
 glb_merged.sort_index(inplace=True)
 
+# ==================================================
+# DROPDOWN / SLIDER INPUT DEFINITIONS
+# ==================================================
+# DROPDOWN locations
+# ==================================================
 # get the list with dicts for the location dropdown selection
 # https://dash.plotly.com/dash-core-components/dropdown#options-and-value
 all_location_names = sorted(glb_merged["uniek_id"].unique().tolist())
@@ -176,9 +202,21 @@ location_names = [
 ]
 # use the IMEI part as the all_location_names
 all_location_names = [i.split("|")[0] for i in all_location_names]
+#print(location_names)
+#print(all_location_names)
 
-print(location_names)
-print(all_location_names)
+# DATESLIDER
+# ==================================================
+date_list = sorted(glb_merged['datum_str'].unique().tolist())
+#print(date_list)
+glb_dateslider_marks_dict = {}
+for i in range(0, len(date_list)):
+    glb_dateslider_marks_dict[i] = {'label': date_list[i],
+                                "style": {"marginTop": "20px",
+                                          "marginLeft": "-15px",
+                                          "transform": "rotate(-90deg)"}
+                                    }
+#print(glb_dateslider_marks_dict)
 
 
 # ==================================================
@@ -268,21 +306,29 @@ def OVERALL_APP_LAYOUT():
             dbg_str="-* debug text here *-",  # start with empty debug text
             hide_it=glb_hide_debug_text,
         ),
+        html.Br([], ),
+
         # CENTER ROW
         # ==========
-
-        html.Br([], ),
         rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
+        html.Br([], ),
+
+        rows.DATESLIDER_SELECTION_ROW("Selecteer datum range", glb_dateslider_marks_dict, int(len(glb_dateslider_marks_dict) / 2)),
         html.Br([], ),
 
         GRAPHS_ROW("current_fig", settings_graph_modebar('current_graph'), empty_fig),
         GRAPHS_ROW("cumulative_fig", settings_graph_modebar('cumulative_graph'), empty_fig),
         GRAPHS_ROW("errordots_fig", settings_graph_modebar('errordots_graph'), empty_fig,),
+        html.Br([], ),
 
         # BELOW THE ROWS
         # ============================
-        html.Br(),
+        html.Br([], ),
+
+        # BOTTOM ROW / FOOTER ROW
+        # ====================
         footer.build_footer(),
+        html.Br([], ),
     ],
     id="data-screen",
     # style={
@@ -351,18 +397,27 @@ app.layout = OVERALL_APP_LAYOUT()
     # Changes in (one of) these fires this callback
     # =============================================
     Input('location-selection', 'value'),  # use value from switch
+    Input('date-slider-selection', 'value'),  # use value from switch
 
     # Values passed without firing callback
     # =============================================
     # State('','')
 )
-def current_fig(data_to_show_list):
+def current_fig(data_to_show_list, dates_to_use):
     global glb_merged
-    print('current_fig')
-    print(data_to_show_list)
-    print(glb_merged.columns)
+    global glb_dateslider_marks_dict
 
-    output_fig = px.line(glb_merged[glb_merged["IMEI_str"].isin(data_to_show_list)],
+#    print('current_fig')
+#    print(data_to_show_list)
+#    print(glb_merged.columns)
+
+    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+
+    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
+    dates_subset_df = glb_merged.loc[mask]
+
+    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
                          x="date-time_str",
                          y="payload_1",
                          color='uniek_id',
@@ -385,18 +440,23 @@ def current_fig(data_to_show_list):
     # Changes in (one of) these fires this callback
     # =============================================
     Input('location-selection', 'value'),  # use value from switch
+    Input('date-slider-selection', 'value'),  # use value from switch
 
     # Values passed without firing callback
     # =============================================
     # State('','')
 )
-def cumulative_fig(data_to_show_list):
+def cumulative_fig(data_to_show_list, dates_to_use):
     global glb_merged
-    print('cumulative_fig')
-    print(data_to_show_list)
-    print(glb_merged.columns)
+    global glb_dateslider_marks_dict
 
-    output_fig = px.line(glb_merged[glb_merged["IMEI_str"].isin(data_to_show_list)],
+    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+
+    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
+    dates_subset_df = glb_merged.loc[mask]
+
+    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
                          x="date-time_str",
                          y="payload_2",
                          color='uniek_id',
@@ -408,6 +468,7 @@ def cumulative_fig(data_to_show_list):
 
     return output_fig
 
+
 # UPDATE errordots_fig GRAPH
 # ==================================================
 @app.callback(
@@ -418,16 +479,27 @@ def cumulative_fig(data_to_show_list):
     # Changes in (one of) these fires this callback
     # =============================================
     Input('location-selection', 'value'),  # use value from switch
+    Input('date-slider-selection', 'value'),  # use value from switch
     # Values passed without firing callback
     # =============================================
     # State('','')
 )
-def error_dots_fig(data_to_show_list):
-    print('error_dots_fig')
-    print(data_to_show_list)
-    print(glb_dataset_error)
+def error_dots_fig(data_to_show_list, dates_to_use):
+    global glb_dataset_error
+    global glb_dateslider_marks_dict
 
-    output_fig = px.scatter(glb_dataset_error[glb_dataset_error["IMEI_str"].isin(data_to_show_list)],
+#    print('error_dots_fig')
+#    print(data_to_show_list)
+#    print(dates_to_use)
+#    print(glb_dataset_error)
+
+    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+
+    mask = (glb_dataset_error['datum_str'] >= start_date_str) & (glb_dataset_error['datum_str'] <= end_date_str)
+    dates_subset_df = glb_dataset_error.loc[mask]
+
+    output_fig = px.scatter(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
                             x="datum_dt",
                             y='uur_str',
                             color='uniek_id',

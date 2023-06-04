@@ -72,6 +72,33 @@ def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
         ]
     )
 
+def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val=1):
+    return dbc.Row(  # date selection
+        [
+            dbc.Col(
+                [html.P([SelectionText], )],
+                style={
+                    # "border-style": "solid"
+                    "marginLeft": "10px",
+                },
+                width=3),
+            dbc.Col(
+                [
+                    # https://dash.plotly.com/dash-core-components/rangeslider
+                    dcc.RangeSlider(
+                        min=0,
+                        max=len(marks_dict),
+                        step=1,
+                        id='date-slider-selection',
+                        value=[start_val-1, start_val+1],
+                        marks=marks_dict)
+                ],
+                width=8,
+            ),
+        ]
+    )
+
+
 def MUNICIPALITY_NAME_SELECTION_ROW(SelectionText, DropDownOptions):
     return dbc.Row(  # Municipality
         [
