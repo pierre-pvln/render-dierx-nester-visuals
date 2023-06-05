@@ -91,8 +91,12 @@ def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val=1):
                         step=1,
                         id='date-slider-selection',
                         value=[start_val-1, start_val+1],
-                        marks=marks_dict)
+                        marks=marks_dict),
                 ],
+                style={
+                    # "border-style": "solid",
+                    "height": "100px",  # ensures that text is readable
+                },
                 width=8,
             ),
         ]

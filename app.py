@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v04"
+app_version = "v05"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -211,12 +211,13 @@ all_location_names = [i.split("|")[0] for i in all_location_names]
 date_list = sorted(glb_merged['datum_str'].unique().tolist())
 #print(date_list)
 glb_dateslider_marks_dict = {}
+
 for i in range(0, len(date_list)):
     glb_dateslider_marks_dict[i] = {'label': date_list[i],
-                                "style": {"marginTop": "20px",
-                                          "marginLeft": "-15px",
-                                          "transform": "rotate(-90deg)"}
-                                    }
+                                    "style": {"marginTop": "20px",
+                                              "marginLeft": "-30px",
+                                              "transform": "rotate(-90deg)"}
+                                        }
 #print(glb_dateslider_marks_dict)
 
 
@@ -425,8 +426,13 @@ def current_fig(data_to_show_list, dates_to_use):
                          title="Gemeten opbrengst",
                          labels={'date-time_str': 'datum / tijdstip',
                                  'payload_1': 'gemeten kWh',
-                                 'uniek_id': 'DeviceId|Lokatie'}
+                                 'uniek_id': 'DeviceId|Lokatie'},
+                         markers=True,
                          )
+
+    #    output_fig.update_traces(line=dict(dash="dot", width=4, color="red"),
+    #                             marker=dict(color="darkblue", size=20, opacity=0.8))
+    output_fig.update_traces(marker=dict(opacity=0.5))
 
     return output_fig
 
@@ -464,8 +470,14 @@ def cumulative_fig(data_to_show_list, dates_to_use):
                          title="Cumulatieve opbrengst",
                          labels={'date-time_str': 'datum / tijdstip',
                                  'payload_2': 'gemeten kWh',
-                                 'uniek_id': 'DeviceId|Lokatie'}
+                                 'uniek_id': 'DeviceId|Lokatie'},
+                         markers=True,
                          )
+
+#    output_fig.update_traces(line=dict(dash="dot", width=4, color="red"),
+#                             marker=dict(color="darkblue", size=20, opacity=0.8))
+
+    output_fig.update_traces(marker=dict(opacity=0.5))
 
     return output_fig
 
