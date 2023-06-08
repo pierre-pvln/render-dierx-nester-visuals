@@ -389,6 +389,8 @@ app.layout = OVERALL_APP_LAYOUT()
 ####################################################
 # UPDATE GRAPHS
 ####################################################
+
+# ==================================================
 # UPDATE current_fig GRAPH
 # ==================================================
 @app.callback(
@@ -404,8 +406,20 @@ app.layout = OVERALL_APP_LAYOUT()
     # Values passed without firing callback
     # =============================================
     # State('','')
+    
+    # Remarks
+    # =============================================
+    # Input vars in function should start with i_
+    # State vars in function should start with s_
+    # Output vars from function should start with o_
 )
-def current_fig(data_to_show_list, dates_to_use):
+def current_fig(
+    # Input()
+    i_data_to_show_list, 
+    i_dates_to_use
+    
+    # State()
+    ):
     global glb_merged
     global glb_dateslider_marks_dict
 
@@ -413,13 +427,13 @@ def current_fig(data_to_show_list, dates_to_use):
 #    print(data_to_show_list)
 #    print(glb_merged.columns)
 
-    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
-    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+    start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
     mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
     dates_subset_df = glb_merged.loc[mask]
 
-    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
+    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                          x="date-time_str",
                          y="payload_1",
                          color='uniek_id',
@@ -437,6 +451,7 @@ def current_fig(data_to_show_list, dates_to_use):
     return output_fig
 
 
+# ==================================================
 # UPDATE cumulative_fig GRAPH
 # ==================================================
 @app.callback(
@@ -452,18 +467,30 @@ def current_fig(data_to_show_list, dates_to_use):
     # Values passed without firing callback
     # =============================================
     # State('','')
+    
+    # Remarks
+    # =============================================
+    # Input vars in function should start with i_
+    # State vars in function should start with s_
+    # Output vars from function should start with o_
 )
-def cumulative_fig(data_to_show_list, dates_to_use):
+def cumulative_fig(
+    # Input()
+    i_data_to_show_list,
+    i_dates_to_use
+ 
+    # State()
+    ):
     global glb_merged
     global glb_dateslider_marks_dict
 
-    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
-    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+    start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
     mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
     dates_subset_df = glb_merged.loc[mask]
 
-    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
+    output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                          x="date-time_str",
                          y="payload_2",
                          color='uniek_id',
@@ -482,6 +509,7 @@ def cumulative_fig(data_to_show_list, dates_to_use):
     return output_fig
 
 
+# ==================================================
 # UPDATE errordots_fig GRAPH
 # ==================================================
 @app.callback(
@@ -497,8 +525,20 @@ def cumulative_fig(data_to_show_list, dates_to_use):
     # Values passed without firing callback
     # =============================================
     # State('','')
+    
+    # Remarks
+    # =============================================
+    # Input vars in function should start with i_
+    # State vars in function should start with s_
+    # Output vars from function should start with o_
 )
-def error_dots_fig(data_to_show_list, dates_to_use):
+def error_dots_fig(
+    # Input()
+    i_data_to_show_list,
+    i_dates_to_use
+
+    # State()
+    ):
     global glb_dataset_error
     global glb_dateslider_marks_dict
 
@@ -507,13 +547,13 @@ def error_dots_fig(data_to_show_list, dates_to_use):
 #    print(dates_to_use)
 #    print(glb_dataset_error)
 
-    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
-    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+    start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
     mask = (glb_dataset_error['datum_str'] >= start_date_str) & (glb_dataset_error['datum_str'] <= end_date_str)
     dates_subset_df = glb_dataset_error.loc[mask]
 
-    output_fig = px.scatter(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
+    output_fig = px.scatter(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                             x="datum_dt",
                             y='uur_str',
                             color='uniek_id',
@@ -528,6 +568,8 @@ def error_dots_fig(data_to_show_list, dates_to_use):
                             )
     return output_fig
 
+
+# ==================================================
 # UPDATE modulesdots_fig GRAPH
 # ==================================================
 @app.callback(
@@ -543,8 +585,20 @@ def error_dots_fig(data_to_show_list, dates_to_use):
     # Values passed without firing callback
     # =============================================
     # State('','')
+    
+    # Remarks
+    # =============================================
+    # Input vars in function should start with i_
+    # State vars in function should start with s_
+    # Output vars from function should start with o_
 )
-def module_dots_fig(data_to_show_list, dates_to_use):
+def module_dots_fig(
+    # Input()
+    i_data_to_show_list,
+    i_dates_to_use
+    
+    # State()
+    ):
     global glb_merged
     global glb_dateslider_marks_dict
 
@@ -553,15 +607,15 @@ def module_dots_fig(data_to_show_list, dates_to_use):
 #    print(dates_to_use)
 #    print(glb_dataset_error)
 
-    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
-    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+    start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
     # Select the datapoints within the given dates
     mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
     dates_subset_df = glb_merged.loc[mask]
 
     # select the datapoints for the IEMI's
-    pivot_df = pd.pivot_table(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
+    pivot_df = pd.pivot_table(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                               values='payload',
                               aggfunc='count',
                               index='datum_str',

@@ -6,7 +6,7 @@
 #
 # @version    v0.0.6  2023-05-31
 # @author     pierre@amultis.eu
-# @copyright  (C) 2020-2022 Pierre Veelen
+# @copyright  (C) 2020-2023 Pierre Veelen
 #
 # ############################################################################
 #

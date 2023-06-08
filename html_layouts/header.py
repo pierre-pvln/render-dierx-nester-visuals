@@ -4,9 +4,9 @@
 # ENKEL BEDOELD OM EEN LAYOUT ELEMENT TE DEFINIEREN
 # AANPASSINGEN VIA CALLBACK OUTPUTS
 #
-# @version    v0.0.5  2022-11-17
-# @author     pierre@ipheion.eu
-# @copyright  (C) 2020-2022 Pierre Veelen
+# @version    v0.0.6  2023-06-08
+# @author     pierre@amultis.eu
+# @copyright  (C) 2020-2023 Pierre Veelen
 #
 # ############################################################################
 #
