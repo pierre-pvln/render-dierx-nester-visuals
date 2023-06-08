@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v05"
+app_version = "v06"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -140,14 +140,13 @@ dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m
 dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 dataset['datum_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.date
 dataset['datum_str'] = dataset['datum_dt'].astype(str)
+dataset['tijdstip_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.time
+dataset['tijdstip_str'] = dataset['tijdstip_dt'].astype(str)
+dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 
 correct_payload_type_list = ['psh']  # only messeaured values are used
 
 glb_dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
-#glb_dataset_error['datum_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.date
-glb_dataset_error['tijdstip_dt'] = pd.to_datetime(glb_dataset_error['date-time_dt']).dt.time
-glb_dataset_error['tijdstip_str'] = glb_dataset_error['tijdstip_dt'].astype(str)
-glb_dataset_error['uur_str'] = glb_dataset_error['tijdstip_str'].str[:2]
 glb_dataset_error['uniek_id'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['payload_1']
 # set dt column as index
 glb_dataset_error.set_index('date-time_dt', inplace=True)
@@ -243,7 +242,7 @@ def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
                                     id=id_name,
                                     figure=figure_dict,  # initialize with empty figure
                                     style={
-                                        "height": "400px",
+                                    #    "height": "400px",
                                         "width": "100%"
                                     },
                                     config=config_name,
@@ -320,6 +319,7 @@ def OVERALL_APP_LAYOUT():
 
         GRAPHS_ROW("current_fig", settings_graph_modebar('current_graph'), empty_fig),
         GRAPHS_ROW("cumulative_fig", settings_graph_modebar('cumulative_graph'), empty_fig),
+        GRAPHS_ROW("modulesdots_fig", settings_graph_modebar('modulesdots_graph'), empty_fig, ),
         GRAPHS_ROW("errordots_fig", settings_graph_modebar('errordots_graph'), empty_fig,),
         html.Br([], ),
 
@@ -493,6 +493,7 @@ def cumulative_fig(data_to_show_list, dates_to_use):
     # =============================================
     Input('location-selection', 'value'),  # use value from switch
     Input('date-slider-selection', 'value'),  # use value from switch
+
     # Values passed without firing callback
     # =============================================
     # State('','')
@@ -525,6 +526,75 @@ def error_dots_fig(data_to_show_list, dates_to_use):
                                                '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']
                                 },
                             )
+    return output_fig
+
+# UPDATE modulesdots_fig GRAPH
+# ==================================================
+@app.callback(
+    # Where the results of the function end up
+    # =======================================
+    Output('modulesdots_fig', 'figure'),  # updated figure based on input changes
+
+    # Changes in (one of) these fires this callback
+    # =============================================
+    Input('location-selection', 'value'),  # use value from switch
+    Input('date-slider-selection', 'value'),  # use value from switch
+
+    # Values passed without firing callback
+    # =============================================
+    # State('','')
+)
+def module_dots_fig(data_to_show_list, dates_to_use):
+    global glb_merged
+    global glb_dateslider_marks_dict
+
+#    print('error_dots_fig')
+#    print(data_to_show_list)
+#    print(dates_to_use)
+#    print(glb_dataset_error)
+
+    start_date_str = glb_dateslider_marks_dict[dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[dates_to_use[1]]['label']
+
+    # Select the datapoints within the given dates
+    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
+    dates_subset_df = glb_merged.loc[mask]
+
+    # select the datapoints for the IEMI's
+    pivot_df = pd.pivot_table(dates_subset_df[dates_subset_df["IMEI_str"].isin(data_to_show_list)],
+                              values='payload',
+                              aggfunc='count',
+                              index='datum_str',
+                              columns='uur_str')
+
+    # flatten pivot data
+    wide_df = pd.DataFrame(pivot_df.to_records())
+    wide_df.fillna(0, inplace=True)
+    # print(wide_df)
+
+    # create long df for easy plotting
+    long_df = pd.melt(wide_df,
+                      id_vars='datum_str',
+                      value_vars=['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
+                                  '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00'])
+    # print(long_df)
+
+    output_fig = px.scatter(long_df,
+                            x="datum_str",
+                            y='variable',
+                            size='value',
+                            title="Aantal berichten van modules",
+                            labels={'datum_str': 'datum',
+                                    'variable': 'tijdstip'},
+                            category_orders={
+                                   "variable": ['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
+                                                '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']
+                                   },
+                            height=800,
+                            )
+
+    output_fig.update_layout(yaxis=dict(tickvals=['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
+                                                  '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']))
     return output_fig
 
 
