@@ -38,6 +38,36 @@ def MAP_ROW(id_name, settings, a_figure):
         ],
     )
 
+def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
+    return dbc.Row(
+                # row with graph
+                [
+                    # first create a col. this ensures full use of row length
+                    dbc.Col([
+                        # Show a "spinner" until graph has loaded.
+                        # To create this effect, add the graph as child of the loading
+                        dcc.Loading(
+                            # https://dash.plotly.com/dash-core-components/loading
+                            id="loading_"+id_name,
+                            type="default",
+                            children=[
+                                dcc.Graph(
+                                    # https://dash.plotly.com/dash-core-components/graph
+                                    id=id_name,
+                                    figure=figure_dict,  # initialize with empty figure
+                                    style={
+                                    #    "height": "400px",
+                                        "width": "100%"
+                                    },
+                                    config=config_name,
+                                )
+                            ],
+                        ),
+                    ],
+                    ),
+                ],
+            )
+
 
 def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
     print("LOCATION_SELECTION_ROW")

@@ -30,11 +30,13 @@ import certifi
 # authentication
 import dash_auth_personal
 
-# settings for strings
-from config import strings
+# local settings from subfolders of this app
 
+from dcc_graphs.configs.modebars import graph_modebar
 # app layout elements
 from html_layouts import debug, footer, header, rows
+# settings for strings
+from config import strings
 
 # ==================================================
 # DEFINE GENERICALLY USED VARS
@@ -190,6 +192,7 @@ glb_merged.sort_index(inplace=True)
 # ==================================================
 # DROPDOWN / SLIDER INPUT DEFINITIONS
 # ==================================================
+
 # DROPDOWN locations
 # ==================================================
 # get the list with dicts for the location dropdown selection
@@ -223,64 +226,64 @@ for i in range(0, len(date_list)):
 # ==================================================
 # LAYOUT DEFINITIONS
 # ==================================================
-# ToDo move to module section
-def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
-    return dbc.Row(
-                # row with graph
-                [
-                    # first create a col. this ensures full use of row length
-                    dbc.Col([
-                        # Show a "spinner" until graph has loaded.
-                        # To create this effect, add the graph as child of the loading
-                        dcc.Loading(
-                            # https://dash.plotly.com/dash-core-components/loading
-                            id="loading_"+id_name,
-                            type="default",
-                            children=[
-                                dcc.Graph(
-                                    # https://dash.plotly.com/dash-core-components/graph
-                                    id=id_name,
-                                    figure=figure_dict,  # initialize with empty figure
-                                    style={
-                                    #    "height": "400px",
-                                        "width": "100%"
-                                    },
-                                    config=config_name,
-                                )
-                            ],
-                        ),
-                    ],
-                    ),
-                ],
-            )
+# # ToDo move to module section
+# def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
+#     return dbc.Row(
+#                 # row with graph
+#                 [
+#                     # first create a col. this ensures full use of row length
+#                     dbc.Col([
+#                         # Show a "spinner" until graph has loaded.
+#                         # To create this effect, add the graph as child of the loading
+#                         dcc.Loading(
+#                             # https://dash.plotly.com/dash-core-components/loading
+#                             id="loading_"+id_name,
+#                             type="default",
+#                             children=[
+#                                 dcc.Graph(
+#                                     # https://dash.plotly.com/dash-core-components/graph
+#                                     id=id_name,
+#                                     figure=figure_dict,  # initialize with empty figure
+#                                     style={
+#                                     #    "height": "400px",
+#                                         "width": "100%"
+#                                     },
+#                                     config=config_name,
+#                                 )
+#                             ],
+#                         ),
+#                     ],
+#                     ),
+#                 ],
+#             )
 
-# ToDo move to module section
-def settings_graph_modebar(file_name):
-    return dict(
-        # https://plotly.com/javascript/configuration-options/#never-display-the-modebar
-        displayModeBar="hover",
-        # True : always show modebar
-        # False: never show mode bar
-        # "hover": only show modebar when hovering over graph
-
-        # https://plotly.com/javascript/configuration-options/#remove-modebar-buttons
-        modeBarButtonsToRemove=['lasso2d', 'select2d', 'pan2d',
-                                'toggleSpikelines', 'toggleHover',
-                                'hoverClosestCartesian', 'hoverCompareCartesian',
-                                'hoverClosestGl2d'],
-
-        # https://plotly.com/javascript/configuration-options/#customize-download-plot-options
-        toImageButtonOptions=dict(
-            format='png',  # one of 'png', 'svg', 'jpeg', 'webp'
-            filename=file_name,
-            height=500,
-            width=700,
-            scale=1  # Multiply title / legend / axis / canvas sizes by this factor
-        ),
-
-        # https://plotly.com/javascript/configuration-options/#hide-the-plotly-logo-on-the-modebar
-        displaylogo=True  # Either True or False
-    )
+# # ToDo move to module section
+# def settings_graph_modebar(file_name):
+#     return dict(
+#         # https://plotly.com/javascript/configuration-options/#never-display-the-modebar
+#         displayModeBar="hover",
+#         # True : always show modebar
+#         # False: never show mode bar
+#         # "hover": only show modebar when hovering over graph
+#
+#         # https://plotly.com/javascript/configuration-options/#remove-modebar-buttons
+#         modeBarButtonsToRemove=['lasso2d', 'select2d', 'pan2d',
+#                                 'toggleSpikelines', 'toggleHover',
+#                                 'hoverClosestCartesian', 'hoverCompareCartesian',
+#                                 'hoverClosestGl2d'],
+#
+#         # https://plotly.com/javascript/configuration-options/#customize-download-plot-options
+#         toImageButtonOptions=dict(
+#             format='png',  # one of 'png', 'svg', 'jpeg', 'webp'
+#             filename=file_name,
+#             height=500,
+#             width=700,
+#             scale=1  # Multiply title / legend / axis / canvas sizes by this factor
+#         ),
+#
+#         # https://plotly.com/javascript/configuration-options/#hide-the-plotly-logo-on-the-modebar
+#         displaylogo=True  # Either True or False
+#     )
 
 
 # ========================================= #
@@ -317,10 +320,10 @@ def OVERALL_APP_LAYOUT():
         rows.DATESLIDER_SELECTION_ROW("Selecteer datum range", glb_dateslider_marks_dict, int(len(glb_dateslider_marks_dict) / 2)),
         html.Br([], ),
 
-        GRAPHS_ROW("current_fig", settings_graph_modebar('current_graph'), empty_fig),
-        GRAPHS_ROW("cumulative_fig", settings_graph_modebar('cumulative_graph'), empty_fig),
-        GRAPHS_ROW("modulesdots_fig", settings_graph_modebar('modulesdots_graph'), empty_fig, ),
-        GRAPHS_ROW("errordots_fig", settings_graph_modebar('errordots_graph'), empty_fig,),
+        rows.GRAPHS_ROW("current_fig", graph_modebar('current_graph'), empty_fig),
+        rows.GRAPHS_ROW("cumulative_fig", graph_modebar('cumulative_graph'), empty_fig),
+        rows.GRAPHS_ROW("modulesdots_fig", graph_modebar('modulesdots_graph'), empty_fig, ),
+        rows.GRAPHS_ROW("errordots_fig",  graph_modebar('errordots_graph'), empty_fig,),
         html.Br([], ),
 
         # BELOW THE ROWS
@@ -415,11 +418,13 @@ app.layout = OVERALL_APP_LAYOUT()
 )
 def current_fig(
     # Input()
-    i_data_to_show_list, 
+    # =============================================
+    i_data_to_show_list,
     i_dates_to_use
     
     # State()
-    ):
+    # =============================================
+):
     global glb_merged
     global glb_dateslider_marks_dict
 
@@ -476,11 +481,13 @@ def current_fig(
 )
 def cumulative_fig(
     # Input()
+    # =============================================
     i_data_to_show_list,
     i_dates_to_use
- 
+
     # State()
-    ):
+    # =============================================
+):
     global glb_merged
     global glb_dateslider_marks_dict
 
@@ -534,11 +541,13 @@ def cumulative_fig(
 )
 def error_dots_fig(
     # Input()
+    # =============================================
     i_data_to_show_list,
     i_dates_to_use
 
     # State()
-    ):
+    # =============================================
+):
     global glb_dataset_error
     global glb_dateslider_marks_dict
 
@@ -594,11 +603,12 @@ def error_dots_fig(
 )
 def module_dots_fig(
     # Input()
+    # =============================================
     i_data_to_show_list,
     i_dates_to_use
-    
     # State()
-    ):
+    # =============================================
+):
     global glb_merged
     global glb_dateslider_marks_dict
 
