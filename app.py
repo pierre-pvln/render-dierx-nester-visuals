@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v06"
+app_version = "v07"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -146,48 +146,50 @@ dataset['tijdstip_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.time
 dataset['tijdstip_str'] = dataset['tijdstip_dt'].astype(str)
 dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 
-correct_payload_type_list = ['psh']  # only messeaured values are used
+# Read data from file 'filename.csv'
+locations = pd.read_csv(locations_path, sep=";", dtype=str)
 
-glb_dataset_error = dataset[~dataset['payload_type'].isin(correct_payload_type_list)].copy()
-glb_dataset_error['uniek_id'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['payload_1']
+locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " + locations['Postcode'] + " " + locations['Plaats']
+
+# Preview the first 5 lines of the loaded data
+# print(locations.head())
+# print(locations.dtypes)
+# print(locations['serienr'].unique())
+
+merged = pd.merge(dataset, locations, how='left', left_on='IMEI_str', right_on='serienr')
+
+# make sure that a new location/device is detected => glb_merged['adres'] = NaN => "ONBEKEND ADRES"
+merged["Adres"] = merged["Adres"].fillna("ONBEKEND ADRES")
+
+correct_payload_type_list = ['psh']  # only measured values are used
+
+glb_dataset_error = merged[~merged['payload_type'].isin(correct_payload_type_list)].copy()
+glb_dataset_error['uniek_id'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['Adres'] + "|" + glb_dataset_error['payload_1']
 # set dt column as index
 glb_dataset_error.set_index('date-time_dt', inplace=True)
 # sort on index
 glb_dataset_error.sort_index(inplace=True)
 
-dataset_correct = dataset[dataset['payload_type'].isin(correct_payload_type_list)].copy()
 
-filtered_dataset = dataset_correct
-dataset_correct[['payload_1', 'payload_2']] = dataset_correct[['payload_1', 'payload_2']].astype(float)
+glb_dataset_correct = merged[merged['payload_type'].isin(correct_payload_type_list)].copy()
+glb_dataset_correct[['payload_1', 'payload_2']] = glb_dataset_correct[['payload_1', 'payload_2']].astype(float)
 
 # Preview the first 5 lines of the loaded data
 # print(dataset.head())
 # print(dataset.dtypes)
 # print(dataset['IMEI_str'].unique())
 
-# Read data from file 'filename.csv'
-locations = pd.read_csv(locations_path, sep=";", dtype=str) 
 
-locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " + locations['Postcode'] + " " + locations['Plaats']
-
-# Preview the first 5 lines of the loaded data 
-# print(locations.head())
-# print(locations.dtypes)
-# print(locations['serienr'].unique())
-
-glb_merged = pd.merge(dataset_correct, locations, left_on='IMEI_str', right_on='serienr')
-# print(merged.head())
-
-glb_merged['uniek_id'] = glb_merged['IMEI_str'] + "|" + glb_merged['Adres']
+glb_dataset_correct['uniek_id'] = glb_dataset_correct['IMEI_str'] + "|" + glb_dataset_correct['Adres']
 
 # https://strftime.org/
-glb_merged['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
+glb_dataset_correct['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 
 # set dt column as index
-glb_merged.set_index('date-time_dt', inplace=True)
+glb_dataset_correct.set_index('date-time_dt', inplace=True)
 
 # sort on index
-glb_merged.sort_index(inplace=True)
+glb_dataset_correct.sort_index(inplace=True)
 
 # ==================================================
 # DROPDOWN / SLIDER INPUT DEFINITIONS
@@ -197,7 +199,7 @@ glb_merged.sort_index(inplace=True)
 # ==================================================
 # get the list with dicts for the location dropdown selection
 # https://dash.plotly.com/dash-core-components/dropdown#options-and-value
-all_location_names = sorted(glb_merged["uniek_id"].unique().tolist())
+all_location_names = sorted(glb_dataset_correct["uniek_id"].unique().tolist())
 location_names = [
     {"label": i.split("|")[1],  # Get the last part of the 'uniek_id' which is the 'Adres' this is shown in dropdownbox
      "value": i.split("|")[0]}  # Get the first part of the 'uniek_id' which is the 'IMEI' this is the value returned
@@ -210,7 +212,7 @@ all_location_names = [i.split("|")[0] for i in all_location_names]
 
 # DATESLIDER
 # ==================================================
-date_list = sorted(glb_merged['datum_str'].unique().tolist())
+date_list = sorted(glb_dataset_correct['datum_str'].unique().tolist())
 #print(date_list)
 glb_dateslider_marks_dict = {}
 
@@ -226,72 +228,12 @@ for i in range(0, len(date_list)):
 # ==================================================
 # LAYOUT DEFINITIONS
 # ==================================================
-# # ToDo move to module section
-# def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
-#     return dbc.Row(
-#                 # row with graph
-#                 [
-#                     # first create a col. this ensures full use of row length
-#                     dbc.Col([
-#                         # Show a "spinner" until graph has loaded.
-#                         # To create this effect, add the graph as child of the loading
-#                         dcc.Loading(
-#                             # https://dash.plotly.com/dash-core-components/loading
-#                             id="loading_"+id_name,
-#                             type="default",
-#                             children=[
-#                                 dcc.Graph(
-#                                     # https://dash.plotly.com/dash-core-components/graph
-#                                     id=id_name,
-#                                     figure=figure_dict,  # initialize with empty figure
-#                                     style={
-#                                     #    "height": "400px",
-#                                         "width": "100%"
-#                                     },
-#                                     config=config_name,
-#                                 )
-#                             ],
-#                         ),
-#                     ],
-#                     ),
-#                 ],
-#             )
-
-# # ToDo move to module section
-# def settings_graph_modebar(file_name):
-#     return dict(
-#         # https://plotly.com/javascript/configuration-options/#never-display-the-modebar
-#         displayModeBar="hover",
-#         # True : always show modebar
-#         # False: never show mode bar
-#         # "hover": only show modebar when hovering over graph
-#
-#         # https://plotly.com/javascript/configuration-options/#remove-modebar-buttons
-#         modeBarButtonsToRemove=['lasso2d', 'select2d', 'pan2d',
-#                                 'toggleSpikelines', 'toggleHover',
-#                                 'hoverClosestCartesian', 'hoverCompareCartesian',
-#                                 'hoverClosestGl2d'],
-#
-#         # https://plotly.com/javascript/configuration-options/#customize-download-plot-options
-#         toImageButtonOptions=dict(
-#             format='png',  # one of 'png', 'svg', 'jpeg', 'webp'
-#             filename=file_name,
-#             height=500,
-#             width=700,
-#             scale=1  # Multiply title / legend / axis / canvas sizes by this factor
-#         ),
-#
-#         # https://plotly.com/javascript/configuration-options/#hide-the-plotly-logo-on-the-modebar
-#         displaylogo=True  # Either True or False
-#     )
-
-
 # ========================================= #
 #                                           #
 # Define the web/html layout for the app    #
 #                                           #
-# - more details are defined in layouts.py  #
-#                                           #
+# - more details are defined in:            #
+#   .\html_layouts\*.py                     #
 # ========================================= #
 def OVERALL_APP_LAYOUT():
     empty_fig = go.Figure()
@@ -425,18 +367,18 @@ def current_fig(
     # State()
     # =============================================
 ):
-    global glb_merged
+    global glb_dataset_correct
     global glb_dateslider_marks_dict
 
 #    print('current_fig')
 #    print(data_to_show_list)
-#    print(glb_merged.columns)
+#    print(glb_dataset_correct.columns)
 
     start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
     end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
-    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
-    dates_subset_df = glb_merged.loc[mask]
+    mask = (glb_dataset_correct['datum_str'] >= start_date_str) & (glb_dataset_correct['datum_str'] <= end_date_str)
+    dates_subset_df = glb_dataset_correct.loc[mask]
 
     output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                          x="date-time_str",
@@ -488,14 +430,14 @@ def cumulative_fig(
     # State()
     # =============================================
 ):
-    global glb_merged
+    global glb_dataset_correct
     global glb_dateslider_marks_dict
 
     start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
     end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
-    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
-    dates_subset_df = glb_merged.loc[mask]
+    mask = (glb_dataset_correct['datum_str'] >= start_date_str) & (glb_dataset_correct['datum_str'] <= end_date_str)
+    dates_subset_df = glb_dataset_correct.loc[mask]
 
     output_fig = px.line(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                          x="date-time_str",
@@ -609,7 +551,7 @@ def module_dots_fig(
     # State()
     # =============================================
 ):
-    global glb_merged
+    global glb_dataset_correct
     global glb_dateslider_marks_dict
 
 #    print('error_dots_fig')
@@ -621,8 +563,8 @@ def module_dots_fig(
     end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
 
     # Select the datapoints within the given dates
-    mask = (glb_merged['datum_str'] >= start_date_str) & (glb_merged['datum_str'] <= end_date_str)
-    dates_subset_df = glb_merged.loc[mask]
+    mask = (glb_dataset_correct['datum_str'] >= start_date_str) & (glb_dataset_correct['datum_str'] <= end_date_str)
+    dates_subset_df = glb_dataset_correct.loc[mask]
 
     # select the datapoints for the IEMI's
     pivot_df = pd.pivot_table(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
