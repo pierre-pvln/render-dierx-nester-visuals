@@ -45,7 +45,7 @@ from config import strings
 # ==================================================
 # GENERIC/UTILITY FUNCTIONS
 # ==================================================
-def loc_info(locationspath, locationslist):
+def loc_info(locationspath, locationslist, api_key):
     info_df = pd.DataFrame()
 
     if "https://" not in locations_path:  # use a local file
@@ -57,7 +57,8 @@ def loc_info(locationspath, locationslist):
 
         headers = {"Content-Type": "application/json",
                    "Accept": "*/*",
-                   "Accept-Encoding": "gzip, deflate, br"
+                   "Accept-Encoding": "gzip, deflate, br",
+                   "x-api-key": api_key
                    }
 
         for locationid in locationslist:
@@ -129,6 +130,8 @@ else:  # assumes production => minimum output
     # 3 = Show additional info
     glb_hide_debug_text = True
 
+# get the API key from environment var
+aws_api_gw_key = os.getenv("AWS_API_GATEWAY_KEY", default=None)
 
 try:
     valid_username_password_pairs = json.loads(os.getenv("APP_AUTHENTICATION", default=None))
@@ -208,7 +211,7 @@ dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 # get the locations info
 serienr_list = dataset['IMEI_str'].unique().tolist()
 # print(serienr_list)
-locations = loc_info(locations_path, serienr_list)
+locations = loc_info(locations_path, serienr_list, aws_api_gw_key)
 
 #
 # # Read data from file 'filename.csv'
