@@ -1,7 +1,10 @@
+""" graph_test
+
+"""
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v07"
+app_version = "v08"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -38,13 +41,68 @@ from html_layouts import debug, footer, header, rows
 # settings for strings
 from config import strings
 
+
+# ==================================================
+# GENERIC/UTILITY FUNCTIONS
+# ==================================================
+def loc_info(locationspath, locationslist):
+    info_df = pd.DataFrame()
+
+    if "https://" not in locations_path:  # use a local file
+        info_df = pd.read_csv(locationspath, sep=";", dtype=str)
+        info_df['Adres'] = info_df['Straat'] + " " + info_df['Huisnummer'] + " " + info_df['Postcode'] + " " + info_df['Plaats']
+
+    else:  # retrieve data from API
+        https = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
+
+        headers = {"Content-Type": "application/json",
+                   "Accept": "*/*",
+                   "Accept-Encoding": "gzip, deflate, br"
+                   }
+
+        for locationid in locationslist:
+            # print(locationid)
+            base_url = locations_path + str(locationid)
+            # print(base_url)
+
+            # retrieve location info for locationid = IMEI code
+            response = https.request(method='GET',
+                                     headers=headers,
+                                     url=base_url,
+                                     )
+
+            data_json_dict = json.loads(response.data.decode('utf-8'))
+            # print(data_json_dict)
+
+            for index in range(data_json_dict['Count']):  # Should be only 1 item, but to be sure loop over it
+                # print(data_json_dict['Items'][index])
+                serienr = data_json_dict['Items'][index]['SerieNr']['S']
+                plaats = data_json_dict['Items'][index]['Plaats']['S']
+                postcode = data_json_dict['Items'][index]['Postcode']['S']
+                straat = data_json_dict['Items'][index]['Straat']['S']
+                huisnummer = data_json_dict['Items'][index]['Huisnummer']['S']
+                adres = straat + " " + huisnummer + " " + postcode + " " + plaats
+                datadict = {'Adres': adres,
+                            'Straat': straat,
+                            'Huisnummer': huisnummer,
+                            'Postcode': postcode,
+                            'Plaats': plaats,
+                            'serienr': serienr}
+
+                # print(pd.DataFrame([datadict]))
+
+                info_df = pd.concat([info_df, pd.DataFrame([datadict])], ignore_index=True)
+
+    return info_df
+
+
 # ==================================================
 # DEFINE GENERICALLY USED VARS
 # ==================================================
 # initialize some globally used vars
 
 run_environment = "production"
-#run_environment = "tst"
+# run_environment = "tst"
 
 if run_environment == "tst":
     glb_verbose = True  # True
@@ -106,7 +164,8 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 
 # dataset_path = "./data/final/DIERX_Test2.csv"
 dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
-locations_path = "./data/final/DIERX_Locations.csv"
+# locations_path = "./data/final/DIERX_Locations.csv"
+locations_path = "https://cgemqjpjhg.execute-api.eu-central-1.amazonaws.com/v1/info/nester/"
 
 if "http" not in dataset_path:
     # Read data from file 'filename.csv'
@@ -146,10 +205,16 @@ dataset['tijdstip_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.time
 dataset['tijdstip_str'] = dataset['tijdstip_dt'].astype(str)
 dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 
-# Read data from file 'filename.csv'
-locations = pd.read_csv(locations_path, sep=";", dtype=str)
+# get the locations info
+serienr_list = dataset['IMEI_str'].unique().tolist()
+# print(serienr_list)
+locations = loc_info(locations_path, serienr_list)
 
-locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " + locations['Postcode'] + " " + locations['Plaats']
+#
+# # Read data from file 'filename.csv'
+# locations = pd.read_csv(locations_path, sep=";", dtype=str)
+#
+# locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " + locations['Postcode'] + " " + locations['Plaats']
 
 # Preview the first 5 lines of the loaded data
 # print(locations.head())
