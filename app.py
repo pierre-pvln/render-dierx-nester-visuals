@@ -4,7 +4,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v08"
+app_version = "v09"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -132,6 +132,7 @@ else:  # assumes production => minimum output
 
 # get the API key from environment var
 aws_api_gw_key = os.getenv("AWS_API_GATEWAY_KEY", default=None)
+# print(aws_api_gw_key)
 
 try:
     valid_username_password_pairs = json.loads(os.getenv("APP_AUTHENTICATION", default=None))
@@ -190,7 +191,7 @@ else:
     dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
 
 # name columns
-dataset.columns =['IMEI_str', 'date-time_str', 'payload']
+dataset.columns = ['IMEI_str', 'date-time_str', 'payload']
 
 # remove de '<br> at the end of the payload string
 # only valid for http download
@@ -198,6 +199,13 @@ dataset['payload'] = dataset['payload'].str.replace(r'<br>$', '', regex=True)
 
 # Split payload column into two new columns
 dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
+
+# set the message type (unknown, error or correct)
+dataset['msg_type'] = 'unkown'
+correct_payload_type_list = ['psh']  # only measured values are used
+error_payload_type_list = ['err']  # only measured values are used
+dataset.loc[dataset['payload_type'].isin(correct_payload_type_list), 'msg_type'] = 'correct'
+dataset.loc[dataset['payload_type'].isin(error_payload_type_list), 'msg_type'] = 'error'
 
 # https://strftime.org/
 dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
@@ -208,56 +216,41 @@ dataset['tijdstip_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.time
 dataset['tijdstip_str'] = dataset['tijdstip_dt'].astype(str)
 dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 
+
 # get the locations info
 serienr_list = dataset['IMEI_str'].unique().tolist()
 # print(serienr_list)
 locations = loc_info(locations_path, serienr_list, aws_api_gw_key)
 
-#
-# # Read data from file 'filename.csv'
-# locations = pd.read_csv(locations_path, sep=";", dtype=str)
-#
-# locations['Adres'] = locations['Straat'] + " " + locations['Huisnummer'] + " " + locations['Postcode'] + " " + locations['Plaats']
+# combine data with location
+glb_merged_dataset = pd.merge(dataset, locations, how='left', left_on='IMEI_str', right_on='serienr')
 
-# Preview the first 5 lines of the loaded data
-# print(locations.head())
-# print(locations.dtypes)
-# print(locations['serienr'].unique())
+# make sure that a new location/device is detected => merged['adres'] = NaN => "ONBEKEND ADRES"
+glb_merged_dataset["Adres"] = glb_merged_dataset["Adres"].fillna("ONBEKEND ADRES")
+glb_merged_dataset['uniek_id'] = glb_merged_dataset['IMEI_str'] + "|" + glb_merged_dataset['Adres']
 
-merged = pd.merge(dataset, locations, how='left', left_on='IMEI_str', right_on='serienr')
+glb_merged_dataset.sort_values(by=['datum_dt', 'uniek_id'], ignore_index=True, inplace=True)
+glb_merged_dataset.to_csv('./glb_merged_dataset.csv')
 
-# make sure that a new location/device is detected => glb_merged['adres'] = NaN => "ONBEKEND ADRES"
-merged["Adres"] = merged["Adres"].fillna("ONBEKEND ADRES")
+# print(glb_merged_dataset.columns)
 
-correct_payload_type_list = ['psh']  # only measured values are used
-
-glb_dataset_error = merged[~merged['payload_type'].isin(correct_payload_type_list)].copy()
-glb_dataset_error['uniek_id'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['Adres'] + "|" + glb_dataset_error['payload_1']
+glb_dataset_error = glb_merged_dataset[glb_merged_dataset['msg_type'] == 'error'].copy()
+glb_dataset_error['uniek_id_err_msg'] = glb_dataset_error['IMEI_str'] + "|" + glb_dataset_error['Adres'] + "|" + glb_dataset_error['payload_1']
 # set dt column as index
 glb_dataset_error.set_index('date-time_dt', inplace=True)
 # sort on index
 glb_dataset_error.sort_index(inplace=True)
+glb_dataset_error.to_csv('./glb_dataset_error.csv')
 
-
-glb_dataset_correct = merged[merged['payload_type'].isin(correct_payload_type_list)].copy()
+glb_dataset_correct = glb_merged_dataset[glb_merged_dataset['msg_type'] == 'correct'].copy()
 glb_dataset_correct[['payload_1', 'payload_2']] = glb_dataset_correct[['payload_1', 'payload_2']].astype(float)
-
-# Preview the first 5 lines of the loaded data
-# print(dataset.head())
-# print(dataset.dtypes)
-# print(dataset['IMEI_str'].unique())
-
-
 glb_dataset_correct['uniek_id'] = glb_dataset_correct['IMEI_str'] + "|" + glb_dataset_correct['Adres']
-
-# https://strftime.org/
-glb_dataset_correct['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
-
 # set dt column as index
 glb_dataset_correct.set_index('date-time_dt', inplace=True)
-
 # sort on index
 glb_dataset_correct.sort_index(inplace=True)
+glb_dataset_correct.to_csv('./glb_dataset_correct.csv')
+
 
 # ==================================================
 # DROPDOWN / SLIDER INPUT DEFINITIONS
@@ -327,13 +320,17 @@ def OVERALL_APP_LAYOUT():
         rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
         html.Br([], ),
 
-        rows.DATESLIDER_SELECTION_ROW("Selecteer datum range", glb_dateslider_marks_dict, int(len(glb_dateslider_marks_dict) / 2)),
+        rows.DATESLIDER_SELECTION_ROW("Selecteer datum range", glb_dateslider_marks_dict, 0, len(glb_dateslider_marks_dict)-1),
         html.Br([], ),
 
+        # showing measured power values
         rows.GRAPHS_ROW("current_fig", graph_modebar('current_graph'), empty_fig),
         rows.GRAPHS_ROW("cumulative_fig", graph_modebar('cumulative_graph'), empty_fig),
-        rows.GRAPHS_ROW("modulesdots_fig", graph_modebar('modulesdots_graph'), empty_fig, ),
-        rows.GRAPHS_ROW("errordots_fig",  graph_modebar('errordots_graph'), empty_fig,),
+
+        # showing number of received data messages per module per day
+        rows.GRAPHS_ROW("errordots_mod_fig", graph_modebar('errordots_graph'), empty_fig, ),  # showing per module info regarding data messages
+        rows.GRAPHS_ROW("modulesdots_fig", graph_modebar('modulesdots_graph'), empty_fig, ),  # showing received messages per hour block per day. Size of dot is number of messages
+        rows.GRAPHS_ROW("errordots_day_fig", graph_modebar('errordots_graph'), empty_fig, ),  # showing errors per hour per day.
         html.Br([], ),
 
         # BELOW THE ROWS
@@ -527,12 +524,12 @@ def cumulative_fig(
 
 
 # ==================================================
-# UPDATE errordots_fig GRAPH
+# UPDATE errordots_day_fig GRAPH
 # ==================================================
 @app.callback(
     # Where the results of the function end up
     # =======================================
-    Output('errordots_fig', 'figure'),  # updated figure based on input changes
+    Output('errordots_day_fig', 'figure'),  # updated figure based on input changes
 
     # Changes in (one of) these fires this callback
     # =============================================
@@ -549,7 +546,7 @@ def cumulative_fig(
     # State vars in function should start with s_
     # Output vars from function should start with o_
 )
-def error_dots_fig(
+def error_dots_day_fig(
     # Input()
     # =============================================
     i_data_to_show_list,
@@ -575,16 +572,183 @@ def error_dots_fig(
     output_fig = px.scatter(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                             x="datum_dt",
                             y='uur_str',
-                            color='uniek_id',
-                            title="Error Messages",
+                            color='uniek_id_err_msg',
+                            title="Aantal Error Messages per uur per module",
                             labels={'datum_dt': 'datum',
                                     'uur_str': 'tijdstip',
-                                    'uniek_id': 'DeviceId|Foutcode'},
+                                    'uniek_id_err_msg': 'DeviceId|Locatie|ErrorMsg'},
                             category_orders={
                                    "uur_str": ['23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12',
                                                '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01', '00']
                                 },
                             )
+    return output_fig
+
+
+# ==================================================
+# UPDATE errordots_mod_fig GRAPH
+# ==================================================
+@app.callback(
+    # Where the results of the function end up
+    # =======================================
+    Output('errordots_mod_fig', 'figure'),  # updated figure based on input changes
+
+    # Changes in (one of) these fires this callback
+    # =============================================
+    Input('location-selection', 'value'),  # use value from switch
+    Input('date-slider-selection', 'value'),  # use value from switch
+
+    # Values passed without firing callback
+    # =============================================
+    # State('','')
+
+    # Remarks
+    # =============================================
+    # Input vars in function should start with i_
+    # State vars in function should start with s_
+    # Output vars from function should start with o_
+)
+def error_dots_mod_fig(
+        # Input()
+        # =============================================
+        i_data_to_show_list,
+        i_dates_to_use
+
+        # State()
+        # =============================================
+):
+    global glb_merged_dataset
+    global glb_dateslider_marks_dict
+
+    #    print('error_dots_fig')
+    #    print(data_to_show_list)
+    #    print(dates_to_use)
+    #    print(glb_dataset_error)
+
+    start_date_str = glb_dateslider_marks_dict[i_dates_to_use[0]]['label']
+    end_date_str = glb_dateslider_marks_dict[i_dates_to_use[1]]['label']
+
+    mask = (glb_merged_dataset['datum_str'] >= start_date_str) & (glb_merged_dataset['datum_str'] <= end_date_str)
+    dates_subset_df = glb_merged_dataset.loc[mask].copy()
+    dates_subset_df = dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)]
+
+    # print(dates_subset_df[['uniek_id', 'IMEI_str', 'datum_dt']].columns)
+
+    # now get the count of messages per IMEI_str per day and flatten the df
+    pivoted_subset = pd.pivot_table(dates_subset_df[['uniek_id', 'datum_dt', 'msg_type', 'IMEI_str']],
+                                    index=['datum_dt', 'uniek_id', 'msg_type'],
+                                    values=['IMEI_str'],
+                                    aggfunc='count',
+                                    )
+
+    pivot_flat = pd.DataFrame(pivoted_subset.to_records())
+
+    # print(pivot_flat.columns)
+    # print(pivot_flat.head())
+
+    pivot_flat.rename(columns={'IMEI_str': 'Count'}, inplace=True)
+
+    uniek_id_list = pivot_flat['uniek_id'].unique().tolist()
+    datum_dt_list = pivot_flat['datum_dt'].unique().tolist()
+    for an_id in uniek_id_list:
+        # print(an_id)
+        sub_pivot_flat = pivot_flat.loc[pivot_flat["uniek_id"] == an_id]  # select the records related to an_id
+        dates_list = sub_pivot_flat['datum_dt'].unique().tolist()  # create a list of dates that are present
+        # print(dates_list)
+        append_dates_list = list(set(datum_dt_list) - set(dates_list))  # find missing dates to append
+        for append_date in append_dates_list:
+            new_row = {'uniek_id': an_id, 'datum_dt': append_date, 'Count': 0}
+            # print(new_row)
+            # Use the loc method to add the new row to the DataFrame
+            pivot_flat.loc[len(pivot_flat)] = new_row
+
+    pivot_flat.sort_values(by=['datum_dt', 'uniek_id'], ignore_index=True, inplace=True)
+
+    max_count = pivot_flat.loc[pivot_flat['msg_type'] == 'correct', 'Count'].max()  # get max value of correct messages
+
+    pivot_flat['Status'] = "Sending data"
+    pivot_flat['Color'] = "#000000"  # black
+
+    pivot_flat.loc[pivot_flat['Count'] == max_count, 'Status'] = 'Sending maximum data'
+    pivot_flat.loc[pivot_flat['Count'] < max_count/2, 'Status'] = 'Sending some data'
+    pivot_flat.loc[pivot_flat['Count'] < max_count/4, 'Status'] = 'Sending insufficient data'
+    pivot_flat.loc[pivot_flat['Count'] == 0, 'Status'] = 'Sending no data'
+
+    pivot_flat.loc[pivot_flat['msg_type'] == 'error', 'Status'] = 'Sending data with errors'
+
+    #    terms = ['mbus_none', '"mbus_none"']
+#    pivot_flat.loc[pivot_flat['uniek_id'].str.contains('|'.join(terms)), 'Status'] = 'Sending data with errors'
+
+    # Using Dictionary for mapping
+    color_map = {'Sending maximum data': '#006400',  # dark green
+                 'Sending data': '#00ff00',  # green
+                 'Sending some data': '#ff6200',  # dark orange
+                 'Sending insufficient data': '#ff8c00',  # orange
+                 'Sending no data': '#ff0000',  # red
+                 "Sending data with errors": '#0000ff'  # blue
+                 }
+
+    #pivot_flat['Color'] = pivot_flat['Status'].map(color_map)
+    pivot_flat['Size'] = pivot_flat['Count'].fillna(0)
+    pivot_flat['Size'] = pivot_flat['Count'].replace([0, 1, 2, 3], 4)  # replace Count with 4 to see the dot
+
+    # print(pivot_flat)
+    # print(pivot_flat.columns)
+
+    output_fig = px.scatter(pivot_flat,
+                            x="datum_dt",
+                            y='uniek_id',
+                            color='Status',
+                            size='Size',
+                            title="Status datacommunicatie per module",
+                            hover_name='uniek_id',  # column data shown bold in hoverbox
+                            hover_data={'uniek_id': False,  # customize hover text, don't show all columns
+                                        'Count': True,
+                                        'Status': True,
+#                                        'Color': False,
+                                        'Size': False,
+                                        'datum_dt': True
+                                        },
+                            color_discrete_map=color_map,
+                            labels={'datum_dt': 'datum',
+                                    'uniek_id': 'DeviceId|Locatie',
+                                    'Status': 'Unit communication status'},
+                            category_orders={"Status": ['Sending data',  # order in legend
+                                                        'Sending some data',
+                                                        'Sending insufficient data',
+                                                        'Sending no data',
+                                                        'Sending data with errors',
+                                                        'Sending maximum data'
+                                                        ]}
+                            )
+
+    output_fig.layout.update(showlegend=True)
+    # output_fig.update_traces(marker=dict(
+    #                              symbol="circle",  # name of icon in icon set or "circle"
+    #                              size=[
+    #                                  16
+    #                                  if x in ["Sending maximum data"]
+    #                                  else 10
+    #                                  if x in ['Sending data', 'Sending some data', 'Sending insufficient data']
+    #                                  else 6
+    #                                  if x in ['Sending data with errors', 'Sending no data']
+    #                                  else 4
+    #                                  for x in list(pivot_flat['Status'])
+    #                              ],
+    #                              color=[
+    #                                  "#00FF00" if x == "Sending data"  # green
+    #                                  else "#FF6200" if x == "Sending some data"  # dark orange
+    #                                  else "#FF8C00" if x == "Sending insufficient data"  # orange
+    #                                  else "#FF0000" if x == "Sending no data"  # red
+    #                                  else "#0000FF" if x == "Sending data with errors"  # blue
+    #                                  else "#FF00FF"  # magenta
+    #                                  for x in list(pivot_flat["Status"])
+    #                              ],
+    #                              opacity=1,
+    #                          ),
+    #                          )
+    # #output_fig.update_traces(marker=dict(color=list(pivot_flat['Color'])))
+
     return output_fig
 
 
@@ -657,7 +821,7 @@ def module_dots_fig(
                             x="datum_str",
                             y='variable',
                             size='value',
-                            title="Aantal berichten van modules",
+                            title="Aantal berichten (per uur) van alle modules samen",
                             labels={'datum_str': 'datum',
                                     'variable': 'tijdstip'},
                             category_orders={

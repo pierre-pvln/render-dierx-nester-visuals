@@ -70,8 +70,8 @@ def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
 
 
 def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
-    print("LOCATION_SELECTION_ROW")
-    print(alldropdownoptions)
+    # print("LOCATION_SELECTION_ROW")
+    # print(alldropdownoptions)
 
     return dbc.Row(  # location
         [
@@ -102,7 +102,8 @@ def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
         ]
     )
 
-def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val=1):
+
+def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val_index=0, end_val_index=0):
     return dbc.Row(  # date selection
         [
             dbc.Col(
@@ -120,7 +121,7 @@ def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val=1):
                         max=len(marks_dict),
                         step=1,
                         id='date-slider-selection',
-                        value=[start_val-1, start_val+1],
+                        value=[start_val_index, end_val_index],
                         marks=marks_dict),
                 ],
                 style={
