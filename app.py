@@ -4,7 +4,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v09"
+app_version = "v10"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
