@@ -207,6 +207,8 @@ df9 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_9', '
 df9.rename(columns={'TimeStamp_9': 'TimeStampSIM', 'Value_9': 'ValueSIM'}, inplace=True)
 df9['IMEI'] = 'sensor9'
 
+datasetinput = pd.DataFrame()  # clean the datasetinput data
+
 df_set = [df1, df2, df3, df4, df5, df6, df7, df8, df9]
 df = pd.concat(df_set)
 
@@ -231,6 +233,8 @@ df.replace({
 #df.to_excel("simulated.xlsx")
 
 df_out = df[['IMEI', 'TimeStampSIM', 'ValueSIM']].copy()
+df = pd.DataFrame()  # clean the df data
+
 df_out.dropna(inplace=True)
 df_out['ValueSIM'] = df_out['ValueSIM'].astype(str)
 df_out['TimeStampSIM'] = df_out['TimeStampSIM'].str[:-3]
@@ -618,6 +622,10 @@ def error_dots_day_fig(
 
     mask = (glb_dataset_error['datum_str'] >= start_date_str) & (glb_dataset_error['datum_str'] <= end_date_str)
     dates_subset_df = glb_dataset_error.loc[mask]
+
+    print("== error_dots_day_fig ==")
+    print(i_data_to_show_list)
+    print(dates_subset_df.columns)
 
     output_fig = px.scatter(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
                             x="datum_dt",
