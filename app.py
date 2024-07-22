@@ -9,10 +9,15 @@ app_version = "v20"
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
 
+# import module to trace the memomry allocation of this app
+import tracemalloc
+
 import json
 import os
 import socket
 import sys
+
+import pandas as pd
 
 # Visualization modules
 import dash
@@ -20,12 +25,10 @@ import dash_bootstrap_components as dbc
 
 import plotly
 from dash import Dash, dcc, html
-from dash.dash_table.Format import Align, Format, Group
+# from dash.dash_table.Format import Align, Format, Group
 from dash.dependencies import Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
-
-import pandas as pd 
 
 import urllib3
 import certifi
@@ -34,7 +37,6 @@ import certifi
 import dash_auth_personal
 
 # local settings from subfolders of this app
-
 from dcc_graphs.configs.modebars import graph_modebar
 # app layout elements
 from html_layouts import debug, footer, header, rows
@@ -96,6 +98,144 @@ def loc_info(locationspath, locationslist, api_key):
 
     return info_df
 
+
+def retrieve_sim_data(data_url,):
+    datasetinput = pd.read_html(data_url, header=0)  # returns a list of df's
+    df_raw = pd.concat(datasetinput)
+    datasetinput = []  # clean the datasetinput data
+
+    all_columns = False
+    extended_columns = ['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value']
+    if all_columns:
+        df1 = df_raw[extended_columns + ['TimeStamp_1', 'Value_1']].copy()
+    else:
+        df1 = df_raw[['TimeStamp_1', 'Value_1']].copy()
+    df1.rename(columns={'TimeStamp_1': 'date-time_str', 'Value_1': 'payload_1'}, inplace=True)
+    df1.sort_values(by=['date-time_str'], inplace=True)
+    df1['payload_2'] = df1['payload_1'].cumsum()
+    df1['IMEI_str'] = 'sensor1'
+
+    if all_columns:
+        df2 = df_raw[extended_columns + ['TimeStamp_2', 'Value_2']].copy()
+    else:
+        df2 = df_raw[['TimeStamp_2', 'Value_2']].copy()
+    df2.rename(columns={'TimeStamp_2': 'date-time_str', 'Value_2': 'payload_1'}, inplace=True)
+    df2.sort_values(by=['date-time_str'], inplace=True)
+    df2['payload_2'] = df2['payload_1'].cumsum()
+    df2['IMEI_str'] = 'sensor2'
+
+    if all_columns:
+        df3 = df_raw[extended_columns + ['TimeStamp_3', 'Value_3']].copy()
+    else:
+        df3 = df_raw[['TimeStamp_3', 'Value_3']].copy()
+    df3.rename(columns={'TimeStamp_3': 'date-time_str', 'Value_3': 'payload_1'}, inplace=True)
+    df3.sort_values(by=['date-time_str'], inplace=True)
+    df3['payload_2'] = df3['payload_1'].cumsum()
+    df3['IMEI_str'] = 'sensor3'
+
+    if all_columns:
+        df4 = df_raw[extended_columns + ['TimeStamp_4', 'Value_4']].copy()
+    else:
+        df4 = df_raw[['TimeStamp_4', 'Value_4']].copy()
+    df4.rename(columns={'TimeStamp_4': 'date-time_str', 'Value_4': 'payload_1'}, inplace=True)
+    df4.sort_values(by=['date-time_str'], inplace=True)
+    df4['payload_2'] = df4['payload_1'].cumsum()
+    df4['IMEI_str'] = 'sensor4'
+
+    if all_columns:
+        df5 = df_raw[extended_columns + ['TimeStamp_5', 'Value_5']].copy()
+    else:
+        df5 = df_raw[['TimeStamp_5', 'Value_5']].copy()
+    df5.rename(columns={'TimeStamp_5': 'date-time_str', 'Value_5': 'payload_1'}, inplace=True)
+    df5.sort_values(by=['date-time_str'], inplace=True)
+    df5['payload_2'] = df5['payload_1'].cumsum()
+    df5['IMEI_str'] = 'sensor5'
+
+    if all_columns:
+        df6 = df_raw[extended_columns + ['TimeStamp_6', 'Value_6']].copy()
+    else:
+        df6 = df_raw[['TimeStamp_6', 'Value_6']].copy()
+    df6.rename(columns={'TimeStamp_6': 'date-time_str', 'Value_6': 'payload_1'}, inplace=True)
+    df6.sort_values(by=['date-time_str'], inplace=True)
+    df6['payload_2'] = df6['payload_1'].cumsum()
+    df6['IMEI_str'] = 'sensor6'
+
+    if all_columns:
+        df7 = df_raw[extended_columns + ['TimeStamp_7', 'Value_7']].copy()
+    else:
+        df7 = df_raw[['TimeStamp_7', 'Value_7']].copy()
+    df7.rename(columns={'TimeStamp_7': 'date-time_str', 'Value_7': 'payload_1'}, inplace=True)
+    df7.sort_values(by=['date-time_str'], inplace=True)
+    df7['payload_2'] = df7['payload_1'].cumsum()
+    df7['IMEI_str'] = 'sensor7'
+
+    if all_columns:
+        df8 = df_raw[extended_columns + ['TimeStamp_8', 'Value_8']].copy()
+    else:
+        df8 = df_raw[['TimeStamp_8', 'Value_8']].copy()
+    df8.rename(columns={'TimeStamp_8': 'date-time_str', 'Value_8': 'payload_1'}, inplace=True)
+    df8.sort_values(by=['date-time_str'], inplace=True)
+    df8['payload_2'] = df8['payload_1'].cumsum()
+    df8['IMEI_str'] = 'sensor8'
+
+    if all_columns:
+        df9 = df_raw[extended_columns + ['TimeStamp_9', 'Value_9']].copy()
+    else:
+        df9 = df_raw[['TimeStamp_9', 'Value_9']].copy()
+    df9.rename(columns={'TimeStamp_9': 'date-time_str', 'Value_9': 'payload_1'}, inplace=True)
+    df9.sort_values(by=['date-time_str'], inplace=True)
+    df9['payload_2'] = df9['payload_1'].cumsum()
+    df9['IMEI_str'] = 'sensor9'
+
+    df_raw = pd.DataFrame()  # clean df_raw
+
+    df_set = [df1, df2, df3, df4, df5, df6, df7, df8, df9]
+    df = pd.concat(df_set)
+    df_set = []  # clean df_set
+
+    df.replace({
+        'IMEI_str':
+            {'sensor1': '868333032573210',  # Kastanjelaan 1
+             'sensor2': '868333032564722',  # St Jozefweg 50
+             'sensor3': '868333032947257',  # St Jozefweg 49
+             'sensor4': '868333036363584',  # Goud Es-laan 12
+             'sensor5': '868333032833069',  # Goud Es-laan 11
+             'sensor6': '868333032402170',  # Eikenlaan 9
+             'sensor7': '868333036364624',  # Goud Es-laan 5
+             'sensor8': '868333035034327',  # Micha prive
+             'sensor9': '868333035023122',  # Dierx kantoor
+             }
+    },
+        inplace=True)
+
+    #print(df.columns)
+    # print(df)
+    # df.to_csv("simulated.csv", sep=";")
+    # df.to_excel("simulated.xlsx")
+
+    df_out = df[['IMEI_str', 'date-time_str', 'payload_1', 'payload_2']].copy()
+    df = pd.DataFrame()  # clean the df data
+
+    df_out.dropna(inplace=True)
+    df_out['date-time_str'] = df_out['date-time_str'].str[:-3]
+    df_out['payload_type'] = 'psh'
+    df_out['payload_1'] = df_out['payload_1'].astype(str)
+    df_out['payload_2'] = df_out['payload_2'].astype(str)
+    # print(df_out.columns)
+    # print(df_out.dtypes)
+
+    # print(df_out.columns)
+    # print(df_out)
+
+    # df_out.to_csv("OUTsimulated.csv", sep=";", index=False, header=False)
+    # df_out.to_excel("OUTsimulated.xlsx", index=False, header=False)
+
+    return df_out
+
+
+mem_insights_needed = False
+if mem_insights_needed:
+    tracemalloc.start()
 
 # ==================================================
 # DEFINE GENERICALLY USED VARS
@@ -168,91 +308,9 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 locations_path = "https://cgemqjpjhg.execute-api.eu-central-1.amazonaws.com/v1/info/nester/"
 
 dataset_path = "http://partnersupport.neacon.eu/dshm/convert.php"
-datasetinput = pd.read_html(dataset_path, header=0)
-df = pd.concat(datasetinput)
 
-df1 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_1', 'Value_1']].copy()
-df1.rename(columns={'TimeStamp_1': 'TimeStampSIM', 'Value_1': 'ValueSIM'}, inplace=True)
-df1['IMEI'] = 'sensor1'
 
-df2 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_2', 'Value_2']].copy()
-df2.rename(columns={'TimeStamp_2': 'TimeStampSIM', 'Value_2': 'ValueSIM'}, inplace=True)
-df2['IMEI'] = 'sensor2'
-
-df3 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_3', 'Value_3']].copy()
-df3.rename(columns={'TimeStamp_3': 'TimeStampSIM', 'Value_3': 'ValueSIM'}, inplace=True)
-df3['IMEI'] = 'sensor3'
-
-df4 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_4', 'Value_4']].copy()
-df4.rename(columns={'TimeStamp_4': 'TimeStampSIM', 'Value_4': 'ValueSIM'}, inplace=True)
-df4['IMEI'] = 'sensor4'
-
-df5 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_5', 'Value_5']].copy()
-df5.rename(columns={'TimeStamp_5': 'TimeStampSIM', 'Value_5': 'ValueSIM'}, inplace=True)
-df5['IMEI'] = 'sensor5'
-
-df6 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_6', 'Value_6']].copy()
-df6.rename(columns={'TimeStamp_6': 'TimeStampSIM', 'Value_6': 'ValueSIM'}, inplace=True)
-df6['IMEI'] = 'sensor6'
-
-df7 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_7', 'Value_7']].copy()
-df7.rename(columns={'TimeStamp_7': 'TimeStampSIM', 'Value_7': 'ValueSIM'}, inplace=True)
-df7['IMEI'] = 'sensor7'
-
-df8 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_8', 'Value_8']].copy()
-df8.rename(columns={'TimeStamp_8': 'TimeStampSIM', 'Value_8': 'ValueSIM'}, inplace=True)
-df8['IMEI'] = 'sensor8'
-
-df9 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_9', 'Value_9']].copy()
-df9.rename(columns={'TimeStamp_9': 'TimeStampSIM', 'Value_9': 'ValueSIM'}, inplace=True)
-df9['IMEI'] = 'sensor9'
-
-datasetinput = pd.DataFrame()  # clean the datasetinput data
-
-df_set = [df1, df2, df3, df4, df5, df6, df7, df8, df9]
-df = pd.concat(df_set)
-
-df.replace({
-        'IMEI':
-            {'sensor1': '868333032573210',  # Kastanjelaan 1
-             'sensor2': '868333032564722',  # St Jozefweg 50
-             'sensor3': '868333032947257',  # St Jozefweg 49
-             'sensor4': '868333036363584',  # Goud Es-laan 12
-             'sensor5': '868333032833069',  # Goud Es-laan 11
-             'sensor6': '868333032402170',  # Eikenlaan 9
-             'sensor7': '868333036364624',  # Goud Es-laan 5
-             'sensor8': '868333035034327',  # Micha prive
-             'sensor9': '868333035023122',  # Dierx kantoor
-            }
-        },
-        inplace=True)
-
-#print(df.columns)
-#print(df)
-#df.to_csv("simulated.csv", sep=";")
-#df.to_excel("simulated.xlsx")
-
-df_out = df[['IMEI', 'TimeStampSIM', 'ValueSIM']].copy()
-df = pd.DataFrame()  # clean the df data
-
-df_out.dropna(inplace=True)
-df_out['ValueSIM'] = df_out['ValueSIM'].astype(str)
-df_out['TimeStampSIM'] = df_out['TimeStampSIM'].str[:-3]
-#print(df_out.columns)
-#print(df_out.dtypes)
-df_out['payload'] = "psh:" + df_out['ValueSIM'] + ":0.000000"
-#print(df_out.columns)
-#print(df_out)
-df_out.drop(columns=['ValueSIM'], inplace=True)
-
-#df_out.to_csv("OUTsimulated.csv", sep=";", index=False, header=False)
-#df_out.to_excel("OUTsimulated.xlsx", index=False, header=False)
-
-dataset = df_out
-dataset.rename(columns={'IMEI': 'IMEI_str', 'TimeStampSIM': 'date-time_str'}, inplace=True)
-
-# Split payload column into two new columns
-dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
+dataset = retrieve_sim_data(dataset_path)
 
 # set the message type (unknown, error or correct)
 dataset['msg_type'] = 'unkown'
@@ -284,7 +342,7 @@ glb_merged_dataset["Adres"] = glb_merged_dataset["Adres"].fillna("ONBEKEND ADRES
 glb_merged_dataset['uniek_id'] = glb_merged_dataset['IMEI_str'] + "|" + glb_merged_dataset['Adres']
 
 glb_merged_dataset.sort_values(by=['datum_dt', 'uniek_id'], ignore_index=True, inplace=True)
-glb_merged_dataset.to_csv('./glb_merged_dataset.csv')
+#glb_merged_dataset.to_csv('./glb_merged_dataset.csv')
 
 # print(glb_merged_dataset.columns)
 
@@ -294,7 +352,7 @@ glb_dataset_error['uniek_id_err_msg'] = glb_dataset_error['IMEI_str'] + "|" + gl
 glb_dataset_error.set_index('date-time_dt', inplace=True)
 # sort on index
 glb_dataset_error.sort_index(inplace=True)
-glb_dataset_error.to_csv('./glb_dataset_error.csv')
+#glb_dataset_error.to_csv('./glb_dataset_error.csv')
 
 glb_dataset_correct = glb_merged_dataset[glb_merged_dataset['msg_type'] == 'correct'].copy()
 glb_dataset_correct[['payload_1', 'payload_2']] = glb_dataset_correct[['payload_1', 'payload_2']].astype(float)
@@ -303,7 +361,7 @@ glb_dataset_correct['uniek_id'] = glb_dataset_correct['IMEI_str'] + "|" + glb_da
 glb_dataset_correct.set_index('date-time_dt', inplace=True)
 # sort on index
 glb_dataset_correct.sort_index(inplace=True)
-glb_dataset_correct.to_csv('./glb_dataset_correct.csv')
+#glb_dataset_correct.to_csv('./glb_dataset_correct.csv')
 
 
 # ==================================================
@@ -858,7 +916,7 @@ def module_dots_fig(
 
     # select the datapoints for the IEMI's
     pivot_df = pd.pivot_table(dates_subset_df[dates_subset_df["IMEI_str"].isin(i_data_to_show_list)],
-                              values='payload',
+                              values='payload_type',
                               aggfunc='count',
                               index='datum_str',
                               columns='uur_str')
@@ -909,3 +967,16 @@ if __name__ == "__main__":
         app.run_server(
             debug=True, use_reloader=False
         )  # Turn off reloader if inside Jupyter
+
+    print("[INFO     ] Python app finished")
+
+    if mem_insights_needed:
+        snapshot = tracemalloc.take_snapshot()
+        top_stats = snapshot.statistics('lineno')
+
+        print("[ Top 10 ]")
+        for stat in top_stats[:10]:
+            print(stat)
+
+        # stopping the library
+        tracemalloc.stop()
