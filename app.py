@@ -148,6 +148,9 @@ def retrieve_sim_data(data_url,):
         df5 = df_raw[['TimeStamp_5', 'Value_5']].copy()
     df5.rename(columns={'TimeStamp_5': 'date-time_str', 'Value_5': 'payload_1'}, inplace=True)
     df5.sort_values(by=['date-time_str'], inplace=True)
+    # set startdate for goud es 11 (868333032833069) and eikenlaan 9 (868333032402170) to 17 mei
+    # thus remove all data before that date
+    df5 = df5.drop(df5[(df5['date-time_str'] < '2023-05-17 00:00:00')].index)
     df5['payload_2'] = df5['payload_1'].cumsum()
     df5['IMEI_str'] = 'sensor5'
 
@@ -157,6 +160,9 @@ def retrieve_sim_data(data_url,):
         df6 = df_raw[['TimeStamp_6', 'Value_6']].copy()
     df6.rename(columns={'TimeStamp_6': 'date-time_str', 'Value_6': 'payload_1'}, inplace=True)
     df6.sort_values(by=['date-time_str'], inplace=True)
+    # set startdate for goud es 11 (868333032833069) and eikenlaan 9 (868333032402170) to 17 mei
+    # thus remove all data before that date
+    df6 = df6.drop(df6[(df6['date-time_str'] < '2023-05-17 00:00:00')].index)
     df6['payload_2'] = df6['payload_1'].cumsum()
     df6['IMEI_str'] = 'sensor6'
 
@@ -202,8 +208,8 @@ def retrieve_sim_data(data_url,):
              'sensor5': '868333032833069',  # Goud Es-laan 11
              'sensor6': '868333032402170',  # Eikenlaan 9
              'sensor7': '868333036364624',  # Goud Es-laan 5
-             'sensor8': '868333035034327',  # Micha prive
-             'sensor9': '868333035023122',  # Dierx kantoor
+             'sensor8': '868333035034327',  # Micha
+             'sensor9': '868333035023122',  # Dierx
              }
     },
         inplace=True)
@@ -320,7 +326,6 @@ dataset.loc[dataset['payload_type'].isin(correct_payload_type_list), 'msg_type']
 dataset.loc[dataset['payload_type'].isin(error_payload_type_list), 'msg_type'] = 'error'
 
 # https://strftime.org/
-dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 dataset['date-time_dt'] = pd.to_datetime(dataset['date-time_str'], format='%Y-%m-%d %H:%M:%S')
 dataset['datum_dt'] = pd.to_datetime(dataset['date-time_dt']).dt.date
 dataset['datum_str'] = dataset['datum_dt'].astype(str)
