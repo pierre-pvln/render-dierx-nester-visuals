@@ -4,7 +4,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-app_version = "v10"
+app_version = "v20"
 # put the name of this python file in txt file for processing by other scripts
 with open("_current_app_version.txt", "w") as version_file:
     version_file.write(app_version + "\n")
@@ -73,7 +73,7 @@ def loc_info(locationspath, locationslist, api_key):
                                      )
 
             data_json_dict = json.loads(response.data.decode('utf-8'))
-            # print(data_json_dict)
+            #print(data_json_dict)
 
             for index in range(data_json_dict['Count']):  # Should be only 1 item, but to be sure loop over it
                 # print(data_json_dict['Items'][index])
@@ -165,37 +165,87 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 # =============================================
 # GETTING THE DATA
 # =============================================
-
-# dataset_path = "./data/final/DIERX_Test2.csv"
-dataset_path = "http://partnersupport.neacon.eu/Dierx/print_values.php?auth=cordiplan"
-# locations_path = "./data/final/DIERX_Locations.csv"
 locations_path = "https://cgemqjpjhg.execute-api.eu-central-1.amazonaws.com/v1/info/nester/"
 
-if "http" not in dataset_path:
-    # Read data from file 'filename.csv'
-    dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
-else:
-    # # Creating a PoolManager instance for sending requests.
-    # https = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
-    # # Sending a GET request and getting back response as HTTPResponse object.
-    #
-    # dataset_path_URL = "https://partnersupport.neacon.eu/Dierx/print_values.php"
-    # payload = {'auth': 'cordiplan'}
-    #
-    # response = https.request(
-    #     "GET", dataset_path, fields=payload, retries=urllib3.Retry(total=40, status=40, redirect=40)
-    # )
-    #
-    # # Print the returned data.
-    # print(response.data)
-    dataset = pd.read_csv(dataset_path, sep=";", header=None, dtype=str)
+dataset_path = "http://partnersupport.neacon.eu/dshm/convert.php"
+datasetinput = pd.read_html(dataset_path, header=0)
+df = pd.concat(datasetinput)
 
-# name columns
-dataset.columns = ['IMEI_str', 'date-time_str', 'payload']
+df1 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_1', 'Value_1']].copy()
+df1.rename(columns={'TimeStamp_1': 'TimeStampSIM', 'Value_1': 'ValueSIM'}, inplace=True)
+df1['IMEI'] = 'sensor1'
 
-# remove de '<br> at the end of the payload string
-# only valid for http download
-dataset['payload'] = dataset['payload'].str.replace(r'<br>$', '', regex=True)
+df2 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_2', 'Value_2']].copy()
+df2.rename(columns={'TimeStamp_2': 'TimeStampSIM', 'Value_2': 'ValueSIM'}, inplace=True)
+df2['IMEI'] = 'sensor2'
+
+df3 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_3', 'Value_3']].copy()
+df3.rename(columns={'TimeStamp_3': 'TimeStampSIM', 'Value_3': 'ValueSIM'}, inplace=True)
+df3['IMEI'] = 'sensor3'
+
+df4 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_4', 'Value_4']].copy()
+df4.rename(columns={'TimeStamp_4': 'TimeStampSIM', 'Value_4': 'ValueSIM'}, inplace=True)
+df4['IMEI'] = 'sensor4'
+
+df5 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_5', 'Value_5']].copy()
+df5.rename(columns={'TimeStamp_5': 'TimeStampSIM', 'Value_5': 'ValueSIM'}, inplace=True)
+df5['IMEI'] = 'sensor5'
+
+df6 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_6', 'Value_6']].copy()
+df6.rename(columns={'TimeStamp_6': 'TimeStampSIM', 'Value_6': 'ValueSIM'}, inplace=True)
+df6['IMEI'] = 'sensor6'
+
+df7 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_7', 'Value_7']].copy()
+df7.rename(columns={'TimeStamp_7': 'TimeStampSIM', 'Value_7': 'ValueSIM'}, inplace=True)
+df7['IMEI'] = 'sensor7'
+
+df8 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_8', 'Value_8']].copy()
+df8.rename(columns={'TimeStamp_8': 'TimeStampSIM', 'Value_8': 'ValueSIM'}, inplace=True)
+df8['IMEI'] = 'sensor8'
+
+df9 = df[['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value', 'TimeStamp_9', 'Value_9']].copy()
+df9.rename(columns={'TimeStamp_9': 'TimeStampSIM', 'Value_9': 'ValueSIM'}, inplace=True)
+df9['IMEI'] = 'sensor9'
+
+df_set = [df1, df2, df3, df4, df5, df6, df7, df8, df9]
+df = pd.concat(df_set)
+
+df.replace({
+        'IMEI':
+            {'sensor1': '868333032573210',  # Kastanjelaan 1
+             'sensor2': '868333032564722',  # St Jozefweg 50
+             'sensor3': '868333032947257',  # St Jozefweg 49
+             'sensor4': '868333036363584',  # Goud Es-laan 12
+             'sensor5': '868333032833069',  # Goud Es-laan 11
+             'sensor6': '868333032402170',  # Eikenlaan 9
+             'sensor7': '868333036364624',  # Goud Es-laan 5
+             'sensor8': '868333035034327',  # Micha prive
+             'sensor9': '868333035023122',  # Dierx kantoor
+            }
+        },
+        inplace=True)
+
+#print(df.columns)
+#print(df)
+#df.to_csv("simulated.csv", sep=";")
+#df.to_excel("simulated.xlsx")
+
+df_out = df[['IMEI', 'TimeStampSIM', 'ValueSIM']].copy()
+df_out.dropna(inplace=True)
+df_out['ValueSIM'] = df_out['ValueSIM'].astype(str)
+df_out['TimeStampSIM'] = df_out['TimeStampSIM'].str[:-3]
+#print(df_out.columns)
+#print(df_out.dtypes)
+df_out['payload'] = "psh:" + df_out['ValueSIM'] + ":0.000000"
+#print(df_out.columns)
+#print(df_out)
+df_out.drop(columns=['ValueSIM'], inplace=True)
+
+#df_out.to_csv("OUTsimulated.csv", sep=";", index=False, header=False)
+#df_out.to_excel("OUTsimulated.xlsx", index=False, header=False)
+
+dataset = df_out
+dataset.rename(columns={'IMEI': 'IMEI_str', 'TimeStampSIM': 'date-time_str'}, inplace=True)
 
 # Split payload column into two new columns
 dataset[['payload_type', 'payload_1', 'payload_2']] = dataset.payload.str.split(":", expand=True)
@@ -219,7 +269,7 @@ dataset['uur_str'] = dataset['tijdstip_str'].str[:2]
 
 # get the locations info
 serienr_list = dataset['IMEI_str'].unique().tolist()
-# print(serienr_list)
+#print(serienr_list)
 locations = loc_info(locations_path, serienr_list, aws_api_gw_key)
 
 # combine data with location

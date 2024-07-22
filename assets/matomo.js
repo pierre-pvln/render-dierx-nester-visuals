@@ -1,7 +1,14 @@
 /*
  *   Script to use in plotly dash to get access data in Matomo
+ *
  *   https://stackoverflow.com/questions/53893045/how-to-add-google-analytics-to-plotly-dash-app
- *   It is import to remove the <script> and </script> tags from the auto generated script
+ *   It is import to remove the <script> and </script> tags from the auto generated matomo script
+ *   
+ *   This script is puts in the footer section. 
+ *
+ *   If script needs to be in header section then
+ *   https://community.plotly.com/t/tracking-application-analytics-with-google-analytics/38946/4
+ *
  */
 <!-- Matomo -->
 <!-- <script> -->
