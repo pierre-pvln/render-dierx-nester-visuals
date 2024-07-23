@@ -478,3 +478,33 @@ def LEGEND_ROW():
             "height": "250px",
         },
     )
+
+
+def MONTH_RADIO_ROW(SelectionText, RadioItemOptions, RadioItemValue):
+    return dbc.Row(  # location
+        [
+            dbc.Col(
+                [html.P([SelectionText],)],
+                style={
+                    # "border-style": "solid"
+                    "marginLeft": "10px",
+                },
+                width=3),
+            dbc.Col(
+                [
+                    # https://dash.plotly.com/dash-core-components/dropdown
+                    dcc.RadioItems(
+                        options=RadioItemOptions,
+                        id="radio-item-selection",
+                        value=RadioItemValue,
+                        inline=True,  # horizontal line
+                        labelStyle={
+                            "display": "inline-block",
+                            "marginRight": "50px",
+                        },
+                    ),
+                ],
+                width=8,
+            ),
+        ]
+    )

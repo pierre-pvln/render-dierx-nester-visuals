@@ -368,6 +368,23 @@ glb_dataset_correct.set_index('date-time_dt', inplace=True)
 glb_dataset_correct.sort_index(inplace=True)
 #glb_dataset_correct.to_csv('./glb_dataset_correct.csv')
 
+glb_periods_list = [
+    {'label': '2023-05', 'value': '2023-05'},
+    {'label': '2023-06', 'value': '2023-06'},
+    {'label': '2023-07', 'value': '2023-07'},
+    {'label': '2023-08', 'value': '2023-08'},
+    {'label': '2023-09', 'value': '2023-09'},
+    {'label': '2023-10', 'value': '2023-10'},
+    {'label': '2023-11', 'value': '2023-11'},
+    {'label': '2023-12', 'value': '2023-12'},
+    {'label': '2024-01', 'value': '2023-01'},
+    {'label': '2024-02', 'value': '2023-02'},
+    {'label': '2024-03', 'value': '2023-03'},
+    {'label': '2024-04', 'value': '2023-04'},
+    {'label': '2024-05', 'value': '2023-05'},
+    {'label': '2024-06', 'value': '2023-06'},
+    {'label': '2024-07', 'value': '2023-07'},
+]
 
 # ==================================================
 # DROPDOWN / SLIDER INPUT DEFINITIONS
@@ -434,6 +451,9 @@ def OVERALL_APP_LAYOUT():
 
         # CENTER ROW
         # ==========
+        rows.MONTH_RADIO_ROW("Selecteer gewenste periode", glb_periods_list, "2023-05"),
+        html.Br([], ),
+
         rows.LOCATION_SELECTION_ROW("Selecteer lokatie(s)", location_names, all_location_names),
         html.Br([], ),
 
