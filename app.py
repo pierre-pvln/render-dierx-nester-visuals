@@ -313,7 +313,7 @@ print("[INFO     ] authentication : configured") if valid_username_password_pair
 # =============================================
 locations_path = "https://cgemqjpjhg.execute-api.eu-central-1.amazonaws.com/v1/info/nester/"
 
-dataset_path = "http://partnersupport.neacon.eu/dshm/convert.php"
+dataset_path = "http://partnersupport.neacon.eu/dshm/convert.php?date=2023-06"
 
 
 dataset = retrieve_sim_data(dataset_path)
