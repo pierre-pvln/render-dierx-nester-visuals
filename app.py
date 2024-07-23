@@ -105,6 +105,9 @@ def retrieve_sim_data(data_url,):
     datasetinput = []  # clean the datasetinput data
 
     all_columns = False
+
+    # 'sensor1': '868333032573210',  # Kastanjelaan 1
+    # ========================================
     extended_columns = ['TimeStamp', 'SensorID', 'ValueTypeID', 'REAL Value']
     if all_columns:
         df1 = df_raw[extended_columns + ['TimeStamp_1', 'Value_1']].copy()
@@ -112,36 +115,52 @@ def retrieve_sim_data(data_url,):
         df1 = df_raw[['TimeStamp_1', 'Value_1']].copy()
     df1.rename(columns={'TimeStamp_1': 'date-time_str', 'Value_1': 'payload_1'}, inplace=True)
     df1.sort_values(by=['date-time_str'], inplace=True)
-    df1['payload_2'] = df1['payload_1'].cumsum()
-    df1['IMEI_str'] = 'sensor1'
+    df1['temp_kwh'] = df1['payload_1']*20/60
+    df1['payload_2'] = df1['temp_kwh'].cumsum()
+    df1.drop(columns=['temp_kwh'], inplace=True)
+    df1['IMEI_str'] = '868333032573210'
 
+    # 'sensor2': '868333032564722',  # St Jozefweg 50
+    # ========================================
     if all_columns:
         df2 = df_raw[extended_columns + ['TimeStamp_2', 'Value_2']].copy()
     else:
         df2 = df_raw[['TimeStamp_2', 'Value_2']].copy()
     df2.rename(columns={'TimeStamp_2': 'date-time_str', 'Value_2': 'payload_1'}, inplace=True)
     df2.sort_values(by=['date-time_str'], inplace=True)
-    df2['payload_2'] = df2['payload_1'].cumsum()
-    df2['IMEI_str'] = 'sensor2'
+    df2['temp_kwh'] = df2['payload_1']*20/60
+    df2['payload_2'] = df2['temp_kwh'].cumsum()
+    df2.drop(columns=['temp_kwh'], inplace=True)
+    df2['IMEI_str'] = '868333032564722'
 
+    # 'sensor3': '868333032947257',  # St Jozefweg 49
+    # ========================================
     if all_columns:
         df3 = df_raw[extended_columns + ['TimeStamp_3', 'Value_3']].copy()
     else:
         df3 = df_raw[['TimeStamp_3', 'Value_3']].copy()
     df3.rename(columns={'TimeStamp_3': 'date-time_str', 'Value_3': 'payload_1'}, inplace=True)
     df3.sort_values(by=['date-time_str'], inplace=True)
-    df3['payload_2'] = df3['payload_1'].cumsum()
-    df3['IMEI_str'] = 'sensor3'
+    df3['temp_kwh'] = df3['payload_1']*20/60
+    df3['payload_2'] = df3['temp_kwh'].cumsum()
+    df3.drop(columns=['temp_kwh'], inplace=True)
+    df3['IMEI_str'] = '868333032947257'
 
+    # 'sensor4': '868333036363584',  # Goud Es-laan 12
+    # ========================================
     if all_columns:
         df4 = df_raw[extended_columns + ['TimeStamp_4', 'Value_4']].copy()
     else:
         df4 = df_raw[['TimeStamp_4', 'Value_4']].copy()
     df4.rename(columns={'TimeStamp_4': 'date-time_str', 'Value_4': 'payload_1'}, inplace=True)
     df4.sort_values(by=['date-time_str'], inplace=True)
-    df4['payload_2'] = df4['payload_1'].cumsum()
-    df4['IMEI_str'] = 'sensor4'
+    df4['temp_kwh'] = df4['payload_1']*20/60
+    df4['payload_2'] = df4['temp_kwh'].cumsum()
+    df4.drop(columns=['temp_kwh'], inplace=True)
+    df4['IMEI_str'] = '868333036363584'
 
+    # 'sensor5': '868333032833069',  # Goud Es-laan 11
+    # ========================================
     if all_columns:
         df5 = df_raw[extended_columns + ['TimeStamp_5', 'Value_5']].copy()
     else:
@@ -151,9 +170,13 @@ def retrieve_sim_data(data_url,):
     # set startdate for goud es 11 (868333032833069) and eikenlaan 9 (868333032402170) to 17 mei
     # thus remove all data before that date
     df5 = df5.drop(df5[(df5['date-time_str'] < '2023-05-17 00:00:00')].index)
-    df5['payload_2'] = df5['payload_1'].cumsum()
-    df5['IMEI_str'] = 'sensor5'
+    df5['temp_kwh'] = df5['payload_1']*20/60
+    df5['payload_2'] = df5['temp_kwh'].cumsum()
+    df5.drop(columns=['temp_kwh'], inplace=True)
+    df5['IMEI_str'] = '868333032833069'
 
+    # 'sensor6': '868333032402170',  # Eikenlaan 9
+    # ========================================
     if all_columns:
         df6 = df_raw[extended_columns + ['TimeStamp_6', 'Value_6']].copy()
     else:
@@ -163,35 +186,49 @@ def retrieve_sim_data(data_url,):
     # set startdate for goud es 11 (868333032833069) and eikenlaan 9 (868333032402170) to 17 mei
     # thus remove all data before that date
     df6 = df6.drop(df6[(df6['date-time_str'] < '2023-05-17 00:00:00')].index)
-    df6['payload_2'] = df6['payload_1'].cumsum()
-    df6['IMEI_str'] = 'sensor6'
+    df6['temp_kwh'] = df6['payload_1']*20/60
+    df6['payload_2'] = df6['temp_kwh'].cumsum()
+    df6.drop(columns=['temp_kwh'], inplace=True)
+    df6['IMEI_str'] = '868333032402170'
 
+    # 'sensor7': '868333036364624',  # Goud Es-laan 5
+    # ========================================
     if all_columns:
         df7 = df_raw[extended_columns + ['TimeStamp_7', 'Value_7']].copy()
     else:
         df7 = df_raw[['TimeStamp_7', 'Value_7']].copy()
     df7.rename(columns={'TimeStamp_7': 'date-time_str', 'Value_7': 'payload_1'}, inplace=True)
     df7.sort_values(by=['date-time_str'], inplace=True)
-    df7['payload_2'] = df7['payload_1'].cumsum()
-    df7['IMEI_str'] = 'sensor7'
+    df7['temp_kwh'] = df7['payload_1']*20/60
+    df7['payload_2'] = df7['temp_kwh'].cumsum()
+    df7.drop(columns=['temp_kwh'], inplace=True)
+    df7['IMEI_str'] = '868333036364624'
 
+    # 'sensor8': '868333035034327',  # Micha
+    # ========================================
     if all_columns:
         df8 = df_raw[extended_columns + ['TimeStamp_8', 'Value_8']].copy()
     else:
         df8 = df_raw[['TimeStamp_8', 'Value_8']].copy()
     df8.rename(columns={'TimeStamp_8': 'date-time_str', 'Value_8': 'payload_1'}, inplace=True)
     df8.sort_values(by=['date-time_str'], inplace=True)
-    df8['payload_2'] = df8['payload_1'].cumsum()
-    df8['IMEI_str'] = 'sensor8'
+    df8['temp_kwh'] = df8['payload_1']*20/60
+    df8['payload_2'] = df8['temp_kwh'].cumsum()
+    df8.drop(columns=['temp_kwh'], inplace=True)
+    df8['IMEI_str'] = '868333035034327'
 
+    # 'sensor9': '868333035023122',  # Dierx
+    # ========================================
     if all_columns:
         df9 = df_raw[extended_columns + ['TimeStamp_9', 'Value_9']].copy()
     else:
         df9 = df_raw[['TimeStamp_9', 'Value_9']].copy()
     df9.rename(columns={'TimeStamp_9': 'date-time_str', 'Value_9': 'payload_1'}, inplace=True)
     df9.sort_values(by=['date-time_str'], inplace=True)
-    df9['payload_2'] = df9['payload_1'].cumsum()
-    df9['IMEI_str'] = 'sensor9'
+    df9['temp_kwh'] = df9['payload_1']*20/60
+    df9['payload_2'] = df9['temp_kwh'].cumsum()
+    df9.drop(columns=['temp_kwh'], inplace=True)
+    df9['IMEI_str'] = '868333035023122'
 
     df_raw = pd.DataFrame()  # clean df_raw
 
@@ -199,22 +236,7 @@ def retrieve_sim_data(data_url,):
     df = pd.concat(df_set)
     df_set = []  # clean df_set
 
-    df.replace({
-        'IMEI_str':
-            {'sensor1': '868333032573210',  # Kastanjelaan 1
-             'sensor2': '868333032564722',  # St Jozefweg 50
-             'sensor3': '868333032947257',  # St Jozefweg 49
-             'sensor4': '868333036363584',  # Goud Es-laan 12
-             'sensor5': '868333032833069',  # Goud Es-laan 11
-             'sensor6': '868333032402170',  # Eikenlaan 9
-             'sensor7': '868333036364624',  # Goud Es-laan 5
-             'sensor8': '868333035034327',  # Micha
-             'sensor9': '868333035023122',  # Dierx
-             }
-    },
-        inplace=True)
-
-    #print(df.columns)
+    # print(df.columns)
     # print(df)
     # df.to_csv("simulated.csv", sep=";")
     # df.to_excel("simulated.xlsx")
@@ -377,13 +399,13 @@ glb_periods_list = [
     {'label': '2023-10', 'value': '2023-10'},
     {'label': '2023-11', 'value': '2023-11'},
     {'label': '2023-12', 'value': '2023-12'},
-    {'label': '2024-01', 'value': '2023-01'},
-    {'label': '2024-02', 'value': '2023-02'},
-    {'label': '2024-03', 'value': '2023-03'},
-    {'label': '2024-04', 'value': '2023-04'},
-    {'label': '2024-05', 'value': '2023-05'},
-    {'label': '2024-06', 'value': '2023-06'},
-    {'label': '2024-07', 'value': '2023-07'},
+    {'label': '2024-01', 'value': '2024-01'},
+    {'label': '2024-02', 'value': '2024-02'},
+    {'label': '2024-03', 'value': '2024-03'},
+    {'label': '2024-04', 'value': '2024-04'},
+    {'label': '2024-05', 'value': '2024-05'},
+    {'label': '2024-06', 'value': '2024-06'},
+    {'label': '2024-07', 'value': '2024-07'},
 ]
 
 # ==================================================
