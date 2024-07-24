@@ -70,8 +70,8 @@ def GRAPHS_ROW(id_name, config_name, figure_dict, verbosity=False):
 
 
 def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
-    # print("LOCATION_SELECTION_ROW")
-    # print(alldropdownoptions)
+    #print("LOCATION_SELECTION_ROW")
+    #print(alldropdownoptions)
 
     return dbc.Row(  # location
         [
@@ -86,7 +86,7 @@ def LOCATION_SELECTION_ROW(selectiontext, dropdownoptions, alldropdownoptions):
                 [
                     # https://dash.plotly.com/dash-core-components/dropdown
                     dcc.Dropdown(
-                        id="location-selection",
+                        id="location-selection-row",
                         options=dropdownoptions,
                         # value=enterprise_options[0]['value'],  # start with one value is selectionbox
                         # value="",  # start with empty slection box
@@ -120,7 +120,7 @@ def DATESLIDER_SELECTION_ROW(SelectionText, marks_dict, start_val_index=0, end_v
                         min=0,
                         max=len(marks_dict),
                         step=1,
-                        id='date-slider-selection',
+                        id='date-slider-selection-row',
                         value=[start_val_index, end_val_index],
                         marks=marks_dict),
                 ],
@@ -480,7 +480,7 @@ def LEGEND_ROW():
     )
 
 
-def MONTH_RADIO_ROW(SelectionText, RadioItemOptions, RadioItemValue):
+def MONTH_RADIO_ROW(id_name, SelectionText, RadioItemOptions, RadioItemValue):
     return dbc.Row(  # location
         [
             dbc.Col(
@@ -495,7 +495,7 @@ def MONTH_RADIO_ROW(SelectionText, RadioItemOptions, RadioItemValue):
                     # https://dash.plotly.com/dash-core-components/dropdown
                     dcc.RadioItems(
                         options=RadioItemOptions,
-                        id="radio-item-selection",
+                        id=id_name,
                         value=RadioItemValue,
                         inline=True,  # horizontal line
                         labelStyle={
